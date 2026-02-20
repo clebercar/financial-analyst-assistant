@@ -1,0 +1,10 @@
+.venv
+__pycache__
+*.pyc
+.git
+.gitignore
+notebooks/
+tests/
+*.md
+*.pdf
+.claude/

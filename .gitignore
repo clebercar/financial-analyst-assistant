@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Modelos treinados (pesados demais pro git)
+models/*.keras
+models/*.joblib
+models/*.png
+!models/.gitkeep
+
+# IDE e OS
+.DS_Store
+.vscode/
+.idea/
+
+# Ambiente
+.env
+.env.*
+
+# Claude
+.claude/
+CLAUDE.md
+
+# Arquivos pessoais (nao fazem parte da entrega)
+roteiro-apresentacao.md
+perguntas-guia-aprendizado.md
+
+# Docker
+*.log
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
