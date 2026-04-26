@@ -13,14 +13,14 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.callbacks import EarlyStopping
 
 from src.data.collector import baixar_dados_acao, extrair_preco_fechamento
-from src.model.preprocessing import (
+from src.models.preprocessing import (
     criar_scaler,
     normalizar_dados,
     desnormalizar_dados,
     criar_sequencias,
     dividir_treino_teste,
 )
-from src.model.lstm import criar_modelo_lstm
+from src.models.lstm import criar_modelo_lstm
 
 
 # Caminhos padrao pra salvar os artefatos do modelo
@@ -162,6 +162,6 @@ def _gerar_grafico(reais: np.ndarray, previsoes: np.ndarray, historico) -> None:
     print(f"Grafico salvo em: {CAMINHO_GRAFICO}")
 
 
-# Permite rodar direto com: python -m src.model.trainer
+# Permite rodar direto com: python -m src.models.trainer
 if __name__ == "__main__":
     treinar_modelo()

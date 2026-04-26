@@ -58,13 +58,13 @@ jupyter lab notebooks/exploratory_analysis.ipynb
 
 Opcao B - via script:
 ```bash
-python -m src.model.trainer
+python -m src.models.trainer
 ```
 
 ### 3. Rodar a API localmente
 
 ```bash
-uvicorn src.api.main:app --reload --port 8000
+uvicorn src.serving.app:app --reload --port 8000
 ```
 
 A documentacao interativa (Swagger) fica em: http://localhost:8000/docs

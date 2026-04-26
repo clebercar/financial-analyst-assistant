@@ -11,15 +11,15 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from tensorflow.keras.models import load_model
 
-from src.api.schemas import PrevisaoRequest, PrevisaoResponse, HealthResponse
-from src.api.monitoring import (
+from src.serving.schemas import PrevisaoRequest, PrevisaoResponse, HealthResponse
+from src.monitoring.prometheus_metrics import (
     registrar_requisicao,
     registrar_previsao,
     registrar_erro,
     medir_tempo,
     metricas_response,
 )
-from src.model.preprocessing import criar_scaler, normalizar_dados, desnormalizar_dados
+from src.models.preprocessing import criar_scaler, normalizar_dados, desnormalizar_dados
 
 # Configuracao de logging pra rastrear o que ta acontecendo
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

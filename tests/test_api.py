@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 import numpy as np
 
-from src.api.main import app
+from src.serving.app import app
 
 
 @pytest.fixture
@@ -61,8 +61,8 @@ class TestPredict:
         mock_scaler.transform.return_value = np.random.rand(60, 1)
         mock_scaler.inverse_transform.return_value = np.array([[155.50]])
 
-        with patch("src.api.main.modelo", mock_modelo), \
-             patch("src.api.main.scaler", mock_scaler):
+        with patch("src.serving.app.modelo", mock_modelo), \
+             patch("src.serving.app.scaler", mock_scaler):
             precos = [150.0 + i * 0.5 for i in range(60)]
             response = client.post("/predict", json={"precos_fechamento": precos})
 

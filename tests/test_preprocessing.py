@@ -4,7 +4,7 @@
 import numpy as np
 import pytest
 
-from src.model.preprocessing import (
+from src.models.preprocessing import (
     criar_scaler,
     normalizar_dados,
     desnormalizar_dados,
