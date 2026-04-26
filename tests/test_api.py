@@ -62,8 +62,10 @@ class TestPredict:
         mock_scaler.transform.return_value = np.random.rand(60, 1)
         mock_scaler.inverse_transform.return_value = np.array([[155.50]])
 
-        with patch("src.serving.app.modelo", mock_modelo), \
-             patch("src.serving.app.scaler", mock_scaler):
+        with (
+            patch("src.serving.app.modelo", mock_modelo),
+            patch("src.serving.app.scaler", mock_scaler),
+        ):
             precos = [150.0 + i * 0.5 for i in range(60)]
             response = client.post("/predict", json={"precos_fechamento": precos})
 
@@ -84,8 +86,9 @@ class TestMetrics:
     def test_metrics_formato_prometheus(self, client):
         response = client.get("/metrics")
         # Metricas Prometheus sao texto plano
-        assert "text/plain" in response.headers.get("content-type", "") or \
-               "text/plain" in str(response.headers)
+        assert "text/plain" in response.headers.get("content-type", "") or "text/plain" in str(
+            response.headers
+        )
 
 
 class TestDocs:

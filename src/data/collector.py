@@ -40,7 +40,9 @@ def baixar_dados_acao(
     df.index = pd.to_datetime(df.index)
     df = df.sort_index()
 
-    print(f"Dados carregados: {len(df)} registros de {df.index[0].date()} ate {df.index[-1].date()}")
+    print(
+        f"Dados carregados: {len(df)} registros de {df.index[0].date()} ate {df.index[-1].date()}"
+    )
 
     return df
 
@@ -51,6 +53,8 @@ def extrair_preco_fechamento(df: pd.DataFrame) -> pd.Series:
     O preco de fechamento e o mais relevante porque representa o valor final do dia.
     """
     if "Close" not in df.columns:
-        raise ValueError("DataFrame nao tem coluna 'Close'. Verifica se os dados foram baixados certo.")
+        raise ValueError(
+            "DataFrame nao tem coluna 'Close'. Verifica se os dados foram baixados certo."
+        )
 
     return df["Close"].copy()

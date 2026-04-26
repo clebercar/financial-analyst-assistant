@@ -260,7 +260,7 @@ Hoje: 2026-04-26 (domingo). Entrega: 2026-05-05.
 ```python
 def consultar_preco(ticker: str) -> dict:
     """Preço atual + variação 30d.
-    
+
     Returns:
         {'ticker': str, 'preco_atual': float, 'moeda': str,
          'variacao_30d_pct': float, 'volume_medio': float,
@@ -269,7 +269,7 @@ def consultar_preco(ticker: str) -> dict:
 
 def prever_preco_lstm(ticker: str, dias: int = 5) -> dict:
     """Projeção LSTM dos próximos N dias úteis.
-    
+
     Returns:
         {'ticker': str, 'previsoes': list[dict],
          'metricas_modelo': {'mae': float, 'rmse': float, 'mape': float},
@@ -279,7 +279,7 @@ def prever_preco_lstm(ticker: str, dias: int = 5) -> dict:
 
 def analisar_sentimento(texto: str) -> dict:
     """Classifica sentimento de trecho de earnings/notícia.
-    
+
     Returns:
         {'sentimento': 'positive' | 'neutral' | 'negative',
          'confianca': float}
@@ -289,7 +289,7 @@ def buscar_em_filings(query: str,
                      ticker: str | None = None,
                      top_k: int = 3) -> dict:
     """RAG sobre 10-K e 10-Q indexados.
-    
+
     Returns:
         {'chunks': list[{'ticker', 'tipo', 'ano', 'secao', 'trecho'}]}
     """
@@ -356,7 +356,7 @@ autor revisa/edita/seleciona 20 (dia 6, ~1-2h).
 ```yaml
 agent_system_prompt_v1: |
   Você é um assistente de analista financeiro especializado em ações.
-  
+
   REGRAS:
   - Use as ferramentas disponíveis sempre que possível antes de responder
   - SEMPRE cite a fonte (qual filing, qual data dos preços)
@@ -364,7 +364,7 @@ agent_system_prompt_v1: |
   - Responda em português brasileiro
   - Para sumários sobre compra/venda, sempre inclua: "Esta é uma análise
     educacional, não recomendação financeira"
-  
+
   FERRAMENTAS DISPONÍVEIS:
   {tools}
 ```

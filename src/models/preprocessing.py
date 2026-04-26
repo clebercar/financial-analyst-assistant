@@ -70,14 +70,15 @@ def criar_sequencias(dados: np.ndarray, tamanho_janela: int = 60) -> tuple[np.nd
         X: array de shape (n_amostras, tamanho_janela, 1) -> entrada do LSTM
         y: array de shape (n_amostras,) -> valor a ser previsto
     """
-    X, y = [], []
+    X_list: list = []
+    y_list: list = []
 
     for i in range(tamanho_janela, len(dados)):
-        X.append(dados[i - tamanho_janela:i, 0])
-        y.append(dados[i, 0])
+        X_list.append(dados[i - tamanho_janela : i, 0])
+        y_list.append(dados[i, 0])
 
-    X = np.array(X)
-    y = np.array(y)
+    X = np.array(X_list)
+    y = np.array(y_list)
 
     # O LSTM espera entrada 3D: (amostras, timesteps, features)
     # No nosso caso: (n_amostras, 60, 1) - 1 feature porque so usamos o preco de fechamento

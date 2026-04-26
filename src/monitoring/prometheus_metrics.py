@@ -58,6 +58,7 @@ def medir_tempo(endpoint: str):
     Decorator que mede o tempo de execucao de um endpoint.
     Registra no histograma do Prometheus.
     """
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -66,7 +67,9 @@ def medir_tempo(endpoint: str):
             duracao = time.time() - inicio
             tempo_resposta.labels(endpoint=endpoint).observe(duracao)
             return resultado
+
         return wrapper
+
     return decorator
 
 

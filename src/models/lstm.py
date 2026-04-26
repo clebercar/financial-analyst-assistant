@@ -39,22 +39,21 @@ def criar_modelo_lstm(tamanho_janela: int = 60, n_features: int = 1) -> Sequenti
     Retorna:
         Modelo Keras compilado e pronto pra treinar
     """
-    modelo = Sequential([
-        # Input explicito - define o formato da entrada
-        Input(shape=(tamanho_janela, n_features)),
-
-        # Primeira camada LSTM
-        LSTM(50, return_sequences=True),
-        Dropout(0.2),
-
-        # Segunda camada LSTM
-        LSTM(50, return_sequences=False),
-        Dropout(0.2),
-
-        # Camadas densas pra gerar a previsao final
-        Dense(25, activation="relu"),
-        Dense(1),  # saida: 1 valor (preco previsto)
-    ])
+    modelo = Sequential(
+        [
+            # Input explicito - define o formato da entrada
+            Input(shape=(tamanho_janela, n_features)),
+            # Primeira camada LSTM
+            LSTM(50, return_sequences=True),
+            Dropout(0.2),
+            # Segunda camada LSTM
+            LSTM(50, return_sequences=False),
+            Dropout(0.2),
+            # Camadas densas pra gerar a previsao final
+            Dense(25, activation="relu"),
+            Dense(1),  # saida: 1 valor (preco previsto)
+        ]
+    )
 
     # Compilacao do modelo:
     # - optimizer='adam': ajusta a taxa de aprendizado automaticamente durante o treino
