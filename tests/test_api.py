@@ -1,83 +1,118 @@
-# Testes da API FastAPI.
-# Usa o TestClient do FastAPI pra simular requisicoes HTTP sem precisar subir o servidor.
+"""Testes da API REST.
 
-from unittest.mock import MagicMock, patch
+Usa o TestClient do FastAPI para simular requisicoes HTTP. Nada de rede:
+o agente e mockado via monkeypatch sobre `get_agent`.
+"""
 
-import numpy as np
+from unittest.mock import MagicMock
+
 import pytest
 from fastapi.testclient import TestClient
-
-from src.serving.app import app
 
 
 @pytest.fixture
 def client():
-    """Cria um cliente de teste da API."""
+    """Cliente de teste da API. Importa o app aqui pra evitar custos no coletar."""
+    from src.serving.app import app
+
     return TestClient(app)
 
 
 class TestHealthCheck:
-    """Testes do endpoint de health check."""
+    """Liveness check basico."""
 
     def test_health_retorna_200(self, client):
         response = client.get("/health")
         assert response.status_code == 200
 
-    def test_health_retorna_status(self, client):
+    def test_health_retorna_status_ok(self, client):
         data = client.get("/health").json()
-        assert "status" in data
-        assert "modelo_carregado" in data
-        assert "versao" in data
+        assert data == {"status": "ok"}
 
 
-class TestPredict:
-    """Testes do endpoint de previsao."""
+class TestChat:
+    """Endpoint /chat - so testamos com agente mockado."""
 
-    def test_predict_sem_modelo_retorna_503(self, client):
-        """Se o modelo nao ta carregado, retorna 503 (service unavailable)."""
-        precos = [150.0 + i * 0.5 for i in range(60)]
-        response = client.post("/predict", json={"precos_fechamento": precos})
+    def test_chat_endpoint_calls_agent(self, monkeypatch):
+        """Caso feliz: agente mockado retorna output + intermediate_steps."""
+        from src.serving import app as app_mod
 
-        # Pode ser 503 (modelo nao carregado) ou 200 (se modelo existir)
-        assert response.status_code in [200, 503]
+        fake_agent = MagicMock()
+        fake_agent.invoke.return_value = {
+            "output": "AAPL custa US$ 175",
+            "intermediate_steps": [],
+        }
+        monkeypatch.setattr(app_mod, "get_agent", lambda: fake_agent)
 
-    def test_predict_poucos_dados_retorna_erro(self, client):
-        """Mandar menos de 60 precos deve dar erro de validacao."""
-        precos = [150.0, 151.0, 152.0]  # so 3 precos
-        response = client.post("/predict", json={"precos_fechamento": precos})
+        client = TestClient(app_mod.app)
+        r = client.post("/chat", json={"pergunta": "Qual o preco da AAPL?"})
+        assert r.status_code == 200
+        body = r.json()
+        assert "AAPL" in body["resposta"]
+        assert body["iteracoes"] == 0
+        assert body["tools_chamadas"] == []
 
-        assert response.status_code == 422  # validation error do Pydantic
+    def test_chat_extrai_tools_chamadas(self, monkeypatch):
+        """tools_chamadas deve conter os nomes das tools nos intermediate_steps."""
+        from src.serving import app as app_mod
 
-    def test_predict_body_vazio_retorna_422(self, client):
-        """Mandar body vazio deve dar erro de validacao."""
-        response = client.post("/predict", json={})
-        assert response.status_code == 422
+        action1 = MagicMock()
+        action1.tool = "consultar_preco"
+        action2 = MagicMock()
+        action2.tool = "prever_preco_lstm"
 
-    def test_predict_com_modelo_mockado(self, client):
-        """Testa o fluxo completo com modelo e scaler mockados."""
-        mock_modelo = MagicMock()
-        mock_modelo.predict.return_value = np.array([[0.5]])
+        fake_agent = MagicMock()
+        fake_agent.invoke.return_value = {
+            "output": "Preco subiu",
+            "intermediate_steps": [(action1, "obs1"), (action2, "obs2")],
+        }
+        monkeypatch.setattr(app_mod, "get_agent", lambda: fake_agent)
 
-        mock_scaler = MagicMock()
-        mock_scaler.transform.return_value = np.random.rand(60, 1)
-        mock_scaler.inverse_transform.return_value = np.array([[155.50]])
+        client = TestClient(app_mod.app)
+        r = client.post("/chat", json={"pergunta": "Qual a previsao da AAPL?"})
+        assert r.status_code == 200
+        body = r.json()
+        assert body["iteracoes"] == 2
+        assert body["tools_chamadas"] == ["consultar_preco", "prever_preco_lstm"]
 
-        with (
-            patch("src.serving.app.modelo", mock_modelo),
-            patch("src.serving.app.scaler", mock_scaler),
-        ):
-            precos = [150.0 + i * 0.5 for i in range(60)]
-            response = client.post("/predict", json={"precos_fechamento": precos})
+    def test_chat_pergunta_vazia_retorna_422(self, client):
+        """Body invalido (pergunta ausente) deve cair na validacao do Pydantic."""
+        r = client.post("/chat", json={})
+        assert r.status_code == 422
 
-            assert response.status_code == 200
-            data = response.json()
-            assert "preco_previsto" in data
-            assert "simbolo" in data
-            assert data["simbolo"] == "AAPL"
+    def test_chat_pergunta_muito_longa_retorna_422(self, client):
+        """Pergunta acima de 4096 chars deve ser rejeitada na validacao."""
+        r = client.post("/chat", json={"pergunta": "a" * 5000})
+        assert r.status_code == 422
+
+    def test_chat_agente_explode_retorna_500(self, monkeypatch):
+        """Se o agente levantar excecao, devolvemos 500 (nao 200)."""
+        from src.serving import app as app_mod
+
+        fake_agent = MagicMock()
+        fake_agent.invoke.side_effect = ValueError("Boom")
+        monkeypatch.setattr(app_mod, "get_agent", lambda: fake_agent)
+
+        client = TestClient(app_mod.app, raise_server_exceptions=False)
+        r = client.post("/chat", json={"pergunta": "Qualquer coisa"})
+        assert r.status_code == 500
+
+    def test_chat_sem_api_key_retorna_503(self, monkeypatch):
+        """Falta de GEMINI_API_KEY deve traduzir em 503 (service unavailable)."""
+        from src.serving import app as app_mod
+
+        def boom():
+            raise RuntimeError("GEMINI_API_KEY nao definida")
+
+        monkeypatch.setattr(app_mod, "get_agent", boom)
+
+        client = TestClient(app_mod.app, raise_server_exceptions=False)
+        r = client.post("/chat", json={"pergunta": "Qual o preco da AAPL?"})
+        assert r.status_code == 503
 
 
 class TestMetrics:
-    """Testes do endpoint de metricas."""
+    """Metricas Prometheus."""
 
     def test_metrics_retorna_200(self, client):
         response = client.get("/metrics")
@@ -86,13 +121,12 @@ class TestMetrics:
     def test_metrics_formato_prometheus(self, client):
         response = client.get("/metrics")
         # Metricas Prometheus sao texto plano
-        assert "text/plain" in response.headers.get("content-type", "") or "text/plain" in str(
-            response.headers
-        )
+        content_type = response.headers.get("content-type", "")
+        assert "text/plain" in content_type or "text/plain" in str(response.headers)
 
 
 class TestDocs:
-    """Testa se a documentacao Swagger ta acessivel."""
+    """Documentacao automatica do FastAPI deve continuar acessivel."""
 
     def test_swagger_docs(self, client):
         response = client.get("/docs")
@@ -101,4 +135,7 @@ class TestDocs:
     def test_openapi_json(self, client):
         response = client.get("/openapi.json")
         assert response.status_code == 200
-        assert "paths" in response.json()
+        body = response.json()
+        assert "paths" in body
+        assert "/chat" in body["paths"]
+        assert "/health" in body["paths"]

@@ -1,82 +1,71 @@
-# Ponto de entrada da API REST.
-# Aqui a gente configura o FastAPI, carrega o modelo treinado e define os endpoints.
-# A API permite receber precos historicos e devolver a previsao do proximo dia.
+"""API REST do Datathon Fase 5: agente financeiro ReAct + Gemini.
+
+Endpoints:
+- GET  /health        -> liveness check.
+- POST /chat          -> pergunta para o agente, retorna resposta + tools usadas.
+- GET  /metrics       -> metricas Prometheus.
+
+O agente e carregado lazy via `get_agent()` e cacheado em variavel modulo-global.
+Isso evita inicializar o agente (que valida GEMINI_API_KEY) durante o import,
+o que quebraria os testes que nao tem chave configurada.
+"""
+
+from __future__ import annotations
 
 import logging
-from contextlib import asynccontextmanager
-from pathlib import Path
+from typing import Any
 
-import joblib
-import numpy as np
 from fastapi import FastAPI, HTTPException, Request
-from tensorflow.keras.models import load_model
 
 from src.monitoring.prometheus_metrics import (
     medir_tempo,
     metricas_response,
     registrar_erro,
-    registrar_previsao,
     registrar_requisicao,
 )
-from src.serving.schemas import HealthResponse, PrevisaoRequest, PrevisaoResponse
+from src.serving.schemas import ChatRequest, ChatResponse, HealthResponse
 
-# Configuracao de logging pra rastrear o que ta acontecendo
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# Caminhos dos artefatos salvos
-CAMINHO_MODELO = Path("models/lstm_model.keras")
-CAMINHO_SCALER = Path("models/scaler.joblib")
-
-# Configuracoes do modelo
-SIMBOLO = "AAPL"
-TAMANHO_JANELA = 60
-VERSAO_MODELO = "1.0.0"
-
-# Variaveis globais pro modelo e scaler (carregados uma vez na inicializacao)
-modelo = None
-scaler = None
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """
-    Lifecycle da aplicacao: carrega o modelo quando a API sobe e limpa quando desce.
-    Isso evita carregar o modelo a cada requisicao, o que seria muito lento.
-    """
-    global modelo, scaler
-
-    logger.info("Iniciando API - carregando modelo e scaler...")
-
-    if CAMINHO_MODELO.exists() and CAMINHO_SCALER.exists():
-        modelo = load_model(CAMINHO_MODELO)
-        scaler = joblib.load(CAMINHO_SCALER)
-        logger.info("Modelo e scaler carregados com sucesso.")
-    else:
-        logger.warning(
-            "Modelo ou scaler nao encontrados. A API vai subir, "
-            "mas o endpoint de previsao nao vai funcionar ate treinar o modelo."
-        )
-
-    yield  # a API roda aqui
-
-    logger.info("Encerrando API.")
-
+VERSAO_API = "0.5.0"
 
 app = FastAPI(
-    title="LSTM Stock Price Predictor",
+    title="Financial Analyst Agent API",
     description=(
-        "API para previsao de precos de acoes usando modelo LSTM. "
-        "Recebe precos historicos de fechamento e retorna a previsao do proximo dia."
+        "API REST do Datathon Fase 5. Expoe um agente ReAct com 4 tools "
+        "financeiras (consultar_preco, prever_preco_lstm, analisar_sentimento, "
+        "buscar_em_filings) backed pelo Gemini."
     ),
-    version=VERSAO_MODELO,
-    lifespan=lifespan,
+    version=VERSAO_API,
 )
 
+# Cache do agente: criado na primeira chamada de `/chat` (lazy).
+_AGENT: Any = None
 
-# Middleware pra registrar todas as requisicoes no monitoramento
+
+def get_agent() -> Any:
+    """Retorna o agente ReAct, criando-o na primeira chamada.
+
+    Lazy load por dois motivos:
+    1. Evita explodir no import quando GEMINI_API_KEY nao esta setada (caso dos
+       testes unitarios).
+    2. Evita pagar o custo de inicializacao do langgraph antes da primeira
+       requisicao real chegar.
+    """
+    global _AGENT
+    if _AGENT is None:
+        # Import local (lazy) pra que o `from src.serving.app import app` nao
+        # carregue langchain/langgraph se a API for usada so para /health.
+        from src.agent.react_agent import create_financial_agent
+
+        _AGENT = create_financial_agent()
+    return _AGENT
+
+
 @app.middleware("http")
 async def middleware_monitoramento(request: Request, call_next):
+    """Registra cada requisicao no Prometheus."""
     response = await call_next(request)
     registrar_requisicao(
         metodo=request.method,
@@ -87,84 +76,39 @@ async def middleware_monitoramento(request: Request, call_next):
 
 
 @app.get("/health", response_model=HealthResponse, tags=["Sistema"])
-async def health_check():
-    """
-    Verifica se a API ta funcionando e se o modelo ta carregado.
-    Util pra monitoramento e pra saber se ta tudo de pe.
-    """
-    return HealthResponse(
-        status="ok" if modelo is not None else "modelo_nao_carregado",
-        modelo_carregado=modelo is not None,
-        versao=VERSAO_MODELO,
-    )
+async def health_check() -> HealthResponse:
+    """Liveness check simples - usado por orquestradores (k8s, docker-compose)."""
+    return HealthResponse(status="ok")
 
 
-@app.post("/predict", response_model=PrevisaoResponse, tags=["Previsao"])
-@medir_tempo(endpoint="/predict")
-async def prever_preco(request: PrevisaoRequest):
-    """
-    Recebe uma lista de precos de fechamento historicos e retorna a previsao
-    do preco do proximo dia.
-
-    O modelo espera pelo menos 60 dias de dados. Se mandar mais, ele usa
-    os ultimos 60 automaticamente.
-    """
-    if modelo is None or scaler is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Modelo nao carregado. Treine o modelo antes de usar a API.",
-        )
+@app.post("/chat", response_model=ChatResponse, tags=["Agente"])
+@medir_tempo(endpoint="/chat")
+async def chat(req: ChatRequest) -> ChatResponse:
+    """Roda o agente ReAct sobre a pergunta e retorna resposta + tools usadas."""
+    try:
+        agent = get_agent()
+    except RuntimeError as e:
+        # GEMINI_API_KEY ausente ou config invalida.
+        registrar_erro()
+        raise HTTPException(status_code=503, detail=str(e)) from e
 
     try:
-        # Pega os precos e garante que tem pelo menos a janela necessaria
-        precos = np.array(request.precos_fechamento)
-
-        if len(precos) < TAMANHO_JANELA:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Precisa de pelo menos {TAMANHO_JANELA} precos. Recebido: {len(precos)}",
-            )
-
-        # Usa os ultimos N dias (tamanho da janela)
-        precos_janela = precos[-TAMANHO_JANELA:]
-
-        # Normaliza usando o mesmo scaler do treinamento
-        precos_normalizados = scaler.transform(precos_janela.reshape(-1, 1))
-
-        # Formata pro LSTM: (1 amostra, 60 timesteps, 1 feature)
-        entrada = precos_normalizados.reshape(1, TAMANHO_JANELA, 1)
-
-        # Faz a previsao
-        previsao_normalizada = modelo.predict(entrada, verbose=0)
-
-        # Volta pra escala original (dolares)
-        preco_previsto = float(scaler.inverse_transform(previsao_normalizada)[0, 0])
-
-        registrar_previsao()
-
-        logger.info(f"Previsao realizada: ${preco_previsto:.2f}")
-
-        return PrevisaoResponse(
-            preco_previsto=round(preco_previsto, 2),
-            simbolo=SIMBOLO,
-            modelo_versao=VERSAO_MODELO,
-        )
-
-    except HTTPException:
-        raise
+        result = agent.invoke({"input": req.pergunta})
     except Exception as e:
         registrar_erro()
-        logger.error(f"Erro na previsao: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erro interno na previsao: {str(e)}",
-        ) from e
+        logger.exception("Erro ao executar agente")
+        raise HTTPException(status_code=500, detail=f"Erro no agente: {e}") from e
+
+    intermediate = result.get("intermediate_steps", []) or []
+    tools_used = [step[0].tool for step in intermediate]
+    return ChatResponse(
+        resposta=result.get("output", ""),
+        iteracoes=len(intermediate),
+        tools_chamadas=tools_used,
+    )
 
 
 @app.get("/metrics", tags=["Monitoramento"])
 async def metricas():
-    """
-    Retorna as metricas no formato Prometheus.
-    Pode ser consumido por ferramentas como Grafana pra criar dashboards.
-    """
+    """Metricas no formato Prometheus (texto plano)."""
     return metricas_response()
