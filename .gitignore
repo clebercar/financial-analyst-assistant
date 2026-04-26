@@ -47,6 +47,7 @@ test-results.xml
 
 # MLflow / RAG / Datathon artefatos
 mlruns/
+mlflow.db
 chroma_db/
 data/raw/*
 data/filings/*
