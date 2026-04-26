@@ -207,3 +207,37 @@ def test_buscar_em_filings_sem_filtro_ticker(monkeypatch):
     assert captured["ticker"] is None
     assert captured["top_k"] == 2
     assert result["total_encontrado"] == 0
+
+
+def test_create_agent_returns_executor(monkeypatch):
+    """create_financial_agent deve montar LLM, prompt e retornar AgentExecutor."""
+    from src.agent import react_agent as ra
+
+    fake_llm = MagicMock()
+    monkeypatch.setattr(ra, "ChatGoogleGenerativeAI", lambda **kw: fake_llm)  # noqa: ARG005
+    monkeypatch.setattr(ra, "create_react_agent", lambda **kw: MagicMock())  # noqa: ARG005
+    monkeypatch.setattr(ra, "AgentExecutor", lambda **kw: "fake_executor")  # noqa: ARG005
+    # Garante que existe uma "API key" no env, mesmo que mockada
+    monkeypatch.setenv("GEMINI_API_KEY", "fake-key-for-tests")
+
+    exe = ra.create_financial_agent()
+    assert exe == "fake_executor"
+
+
+def test_create_agent_aceita_model_name(monkeypatch):
+    """create_financial_agent deve aceitar model_name custom (uso no benchmark do Dia 6)."""
+    from src.agent import react_agent as ra
+
+    captured = {}
+
+    def fake_llm_factory(**kw):
+        captured["model"] = kw.get("model")
+        return MagicMock()
+
+    monkeypatch.setattr(ra, "ChatGoogleGenerativeAI", fake_llm_factory)
+    monkeypatch.setattr(ra, "create_react_agent", lambda **kw: MagicMock())  # noqa: ARG005
+    monkeypatch.setattr(ra, "AgentExecutor", lambda **kw: "fake_executor")  # noqa: ARG005
+    monkeypatch.setenv("GEMINI_API_KEY", "fake-key-for-tests")
+
+    ra.create_financial_agent(model_name="gemini-1.5-pro")
+    assert captured["model"] == "gemini-1.5-pro"
