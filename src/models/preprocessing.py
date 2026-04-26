@@ -4,9 +4,9 @@
 # - Cria as sequencias de entrada (janela deslizante)
 # - Divide em treino e teste
 
+
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
-from typing import Tuple
 
 
 def criar_scaler() -> MinMaxScaler:
@@ -49,7 +49,7 @@ def desnormalizar_dados(dados: np.ndarray, scaler: MinMaxScaler) -> np.ndarray:
     return scaler.inverse_transform(dados)
 
 
-def criar_sequencias(dados: np.ndarray, tamanho_janela: int = 60) -> Tuple[np.ndarray, np.ndarray]:
+def criar_sequencias(dados: np.ndarray, tamanho_janela: int = 60) -> tuple[np.ndarray, np.ndarray]:
     """
     Cria as sequencias de entrada e saida usando janela deslizante.
 
@@ -89,7 +89,7 @@ def criar_sequencias(dados: np.ndarray, tamanho_janela: int = 60) -> Tuple[np.nd
 def dividir_treino_teste(
     dados: np.ndarray,
     proporcao_treino: float = 0.8,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Divide os dados em treino e teste.
 

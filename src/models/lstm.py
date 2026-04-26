@@ -12,8 +12,8 @@
 # Isso resolve o problema de "vanishing gradient" que faz RNNs simples
 # esquecerem informacoes antigas durante o treinamento.
 
-from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout, Input
+from tensorflow.keras.models import Sequential
 
 
 def criar_modelo_lstm(tamanho_janela: int = 60, n_features: int = 1) -> Sequential:

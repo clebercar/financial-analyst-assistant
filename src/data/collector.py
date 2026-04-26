@@ -1,8 +1,8 @@
 # Modulo responsavel por buscar dados historicos de acoes usando a API do Yahoo Finance.
 # A ideia aqui e ter um unico lugar que sabe como baixar e limpar os dados brutos.
 
-import yfinance as yf
 import pandas as pd
+import yfinance as yf
 
 
 def baixar_dados_acao(

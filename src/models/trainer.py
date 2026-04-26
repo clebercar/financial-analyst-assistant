@@ -1,27 +1,26 @@
 # Modulo de treinamento e avaliacao do modelo.
 # Aqui junta tudo: coleta dados, preprocessa, treina o LSTM e calcula as metricas.
 
-import os
-import numpy as np
 import joblib
 import matplotlib
+import numpy as np
+
 matplotlib.use("Agg")  # backend sem interface grafica (pra funcionar em servidor/Docker)
-import matplotlib.pyplot as plt
 from pathlib import Path
+
+import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error, mean_squared_error
-from tensorflow.keras.models import Sequential
 from tensorflow.keras.callbacks import EarlyStopping
 
 from src.data.collector import baixar_dados_acao, extrair_preco_fechamento
+from src.models.lstm import criar_modelo_lstm
 from src.models.preprocessing import (
     criar_scaler,
-    normalizar_dados,
-    desnormalizar_dados,
     criar_sequencias,
+    desnormalizar_dados,
     dividir_treino_teste,
+    normalizar_dados,
 )
-from src.models.lstm import criar_modelo_lstm
-
 
 # Caminhos padrao pra salvar os artefatos do modelo
 DIRETORIO_MODELOS = Path("models")

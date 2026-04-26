@@ -2,8 +2,8 @@
 # Isso garante validacao automatica: se o usuario mandar dados fora do formato,
 # a API ja retorna um erro explicando o que ta errado.
 
+
 from pydantic import BaseModel, Field
-from typing import List
 
 
 class PrevisaoRequest(BaseModel):
@@ -11,7 +11,7 @@ class PrevisaoRequest(BaseModel):
     Corpo da requisicao para o endpoint de previsao.
     O usuario precisa mandar uma lista com os precos de fechamento dos ultimos N dias.
     """
-    precos_fechamento: List[float] = Field(
+    precos_fechamento: list[float] = Field(
         ...,
         min_length=60,
         description="Lista com precos de fechamento dos ultimos dias (minimo 60 valores)",

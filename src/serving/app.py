@@ -2,24 +2,23 @@
 # Aqui a gente configura o FastAPI, carrega o modelo treinado e define os endpoints.
 # A API permite receber precos historicos e devolver a previsao do proximo dia.
 
-import numpy as np
-import joblib
 import logging
-from pathlib import Path
 from contextlib import asynccontextmanager
+from pathlib import Path
 
+import joblib
+import numpy as np
 from fastapi import FastAPI, HTTPException, Request
 from tensorflow.keras.models import load_model
 
-from src.serving.schemas import PrevisaoRequest, PrevisaoResponse, HealthResponse
 from src.monitoring.prometheus_metrics import (
-    registrar_requisicao,
-    registrar_previsao,
-    registrar_erro,
     medir_tempo,
     metricas_response,
+    registrar_erro,
+    registrar_previsao,
+    registrar_requisicao,
 )
-from src.models.preprocessing import criar_scaler, normalizar_dados, desnormalizar_dados
+from src.serving.schemas import HealthResponse, PrevisaoRequest, PrevisaoResponse
 
 # Configuracao de logging pra rastrear o que ta acontecendo
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -156,7 +155,10 @@ async def prever_preco(request: PrevisaoRequest):
     except Exception as e:
         registrar_erro()
         logger.error(f"Erro na previsao: {e}")
-        raise HTTPException(status_code=500, detail=f"Erro interno na previsao: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro interno na previsao: {str(e)}",
+        ) from e
 
 
 @app.get("/metrics", tags=["Monitoramento"])

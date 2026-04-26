@@ -1,10 +1,11 @@
 # Testes da API FastAPI.
 # Usa o TestClient do FastAPI pra simular requisicoes HTTP sem precisar subir o servidor.
 
-import pytest
-from unittest.mock import patch, MagicMock
-from fastapi.testclient import TestClient
+from unittest.mock import MagicMock, patch
+
 import numpy as np
+import pytest
+from fastapi.testclient import TestClient
 
 from src.serving.app import app
 

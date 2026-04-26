@@ -2,14 +2,13 @@
 # Garante que normalizacao, criacao de sequencias e split estao funcionando certo.
 
 import numpy as np
-import pytest
 
 from src.models.preprocessing import (
     criar_scaler,
-    normalizar_dados,
-    desnormalizar_dados,
     criar_sequencias,
+    desnormalizar_dados,
     dividir_treino_teste,
+    normalizar_dados,
 )
 
 
