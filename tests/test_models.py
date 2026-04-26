@@ -65,3 +65,22 @@ def test_lstm_one_step_overfits_tiny_batch():
         losses.append(loss.item())
 
     assert losses[-1] < losses[0], "Modelo nao esta aprendendo em batch trivial"
+
+
+def test_sentiment_predict_returns_label():
+    """Smoke: predict_sentiment usa o classifier injetado e devolve dict valido.
+
+    Mockamos o pipeline sklearn pra evitar carregar modelo real / ler disco.
+    Garantimos apenas o contrato da funcao: chave 'sentimento' e 'confianca'.
+    """
+    from unittest.mock import MagicMock
+
+    from src.models.sentiment_classifier import predict_sentiment
+
+    mock_clf = MagicMock()
+    mock_clf.predict.return_value = ["positive"]
+    mock_clf.predict_proba.return_value = [[0.05, 0.10, 0.85]]
+    mock_clf.classes_ = ["negative", "neutral", "positive"]
+    result = predict_sentiment("Earnings beat expectations", mock_clf)
+    assert result["sentimento"] in ("positive", "neutral", "negative")
+    assert 0.0 <= result["confianca"] <= 1.0
