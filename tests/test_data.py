@@ -48,3 +48,11 @@ def test_load_maps_int_labels_to_strings(monkeypatch):
     monkeypatch.setattr("src.data.financial_phrasebank.load_dataset", _fake_load)
     df = load_phrasebank()
     assert set(df["label"].tolist()) == {"negative", "neutral", "positive"}
+
+
+def test_sec_edgar_filing_path_format(tmp_path):
+    """build_filing_id deve gerar identificadores estaveis no formato TICKER_TIPO_ANO."""
+    from src.data.sec_edgar import build_filing_id
+
+    fid = build_filing_id("AAPL", "10-K", "2024")
+    assert fid == "AAPL_10-K_2024"
