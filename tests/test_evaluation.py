@@ -245,7 +245,11 @@ def test_evaluate_with_judge_smoke(
     fake_react.create_financial_agent = MagicMock(return_value=fake_agent)  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "src.agent.react_agent", fake_react)
 
-    monkeypatch.setattr(llm_judge, "judge_response", lambda q, a, c, **kw: {k: 4.0 for k in c})
+    monkeypatch.setattr(
+        llm_judge,
+        "judge_response",
+        lambda q, a, c, **kw: dict.fromkeys(c, 4.0),
+    )
     monkeypatch.setattr(
         llm_judge,
         "_load_criteria",
