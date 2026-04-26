@@ -1,0 +1,339 @@
+[
+  {
+    "id": "rag_01",
+    "query": "Quais os principais fatores de risco mencionados no ultimo 10-K da Apple?",
+    "category": "rag_pure",
+    "ticker": "AAPL",
+    "tools_expected": [
+      "buscar_em_filings"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "rag_02",
+    "query": "Como a Microsoft descreve sua estrategia de cloud no ultimo 10-K?",
+    "category": "rag_pure",
+    "ticker": "MSFT",
+    "tools_expected": [
+      "buscar_em_filings"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "rag_03",
+    "query": "Quais segmentos de receita do Google tem maior margem segundo o ultimo 10-K?",
+    "category": "rag_pure",
+    "ticker": "GOOGL",
+    "tools_expected": [
+      "buscar_em_filings"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "rag_04",
+    "query": "O que a NVIDIA diz sobre concentracao de clientes no 10-K?",
+    "category": "rag_pure",
+    "ticker": "NVDA",
+    "tools_expected": [
+      "buscar_em_filings"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "rag_05",
+    "query": "Quais os principais investimentos da Meta em IA no ultimo 10-K?",
+    "category": "rag_pure",
+    "ticker": "META",
+    "tools_expected": [
+      "buscar_em_filings"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "rag_06",
+    "query": "Como a Apple aborda riscos cambiais no 10-K?",
+    "category": "rag_pure",
+    "ticker": "AAPL",
+    "tools_expected": [
+      "buscar_em_filings"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "rag_07",
+    "query": "Quais as obrigacoes legais pendentes da Microsoft no ultimo 10-Q?",
+    "category": "rag_pure",
+    "ticker": "MSFT",
+    "tools_expected": [
+      "buscar_em_filings"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "rag_08",
+    "query": "Que compromissos ESG o Google divulga no 10-K?",
+    "category": "rag_pure",
+    "ticker": "GOOGL",
+    "tools_expected": [
+      "buscar_em_filings"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "rag_09",
+    "query": "Quais sao os principais competidores citados pela NVIDIA no 10-K?",
+    "category": "rag_pure",
+    "ticker": "NVDA",
+    "tools_expected": [
+      "buscar_em_filings"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "rag_10",
+    "query": "Como a Meta descreve riscos regulatorios em seu ultimo 10-K?",
+    "category": "rag_pure",
+    "ticker": "META",
+    "tools_expected": [
+      "buscar_em_filings"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "rag_11",
+    "query": "Quais sao as fontes de receita do iPhone segundo o ultimo 10-K da Apple?",
+    "category": "rag_pure",
+    "ticker": "AAPL",
+    "tools_expected": [
+      "buscar_em_filings"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "rag_12",
+    "query": "Que metricas de engajamento a Microsoft destaca no ultimo 10-K?",
+    "category": "rag_pure",
+    "ticker": "MSFT",
+    "tools_expected": [
+      "buscar_em_filings"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "simple_01",
+    "query": "Qual o preco atual da NVDA?",
+    "category": "tool_simple",
+    "ticker": "NVDA",
+    "tools_expected": [
+      "consultar_preco"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "simple_02",
+    "query": "Como a META se comportou nos ultimos 30 dias?",
+    "category": "tool_simple",
+    "ticker": "META",
+    "tools_expected": [
+      "consultar_preco"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "simple_03",
+    "query": "Qual o volume medio de negociacao da AAPL?",
+    "category": "tool_simple",
+    "ticker": "AAPL",
+    "tools_expected": [
+      "consultar_preco"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "simple_04",
+    "query": "O sentimento do trecho 'Apple posted record revenue this quarter' e positivo?",
+    "category": "tool_simple",
+    "ticker": null,
+    "tools_expected": [
+      "analisar_sentimento"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "simple_05",
+    "query": "Qual a variacao de preco da MSFT nos ultimos 30 dias?",
+    "category": "tool_simple",
+    "ticker": "MSFT",
+    "tools_expected": [
+      "consultar_preco"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "simple_06",
+    "query": "Classifique o sentimento de 'The company reported a significant decline in earnings'.",
+    "category": "tool_simple",
+    "ticker": null,
+    "tools_expected": [
+      "analisar_sentimento"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "lstm_01",
+    "query": "Qual sua previsao de preco da AAPL para os proximos 5 dias?",
+    "category": "tool_lstm",
+    "ticker": "AAPL",
+    "tools_expected": [
+      "prever_preco_lstm"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "lstm_02",
+    "query": "Projete o preco da AAPL para 3 dias uteis.",
+    "category": "tool_lstm",
+    "ticker": "AAPL",
+    "tools_expected": [
+      "prever_preco_lstm"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "lstm_03",
+    "query": "Tente prever a AAPL para os proximos 7 dias.",
+    "category": "tool_lstm",
+    "ticker": "AAPL",
+    "tools_expected": [
+      "prever_preco_lstm"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "lstm_04",
+    "query": "Faca uma previsao de preco para a NVDA usando o modelo LSTM (5 dias).",
+    "category": "tool_lstm",
+    "ticker": "NVDA",
+    "tools_expected": [
+      "prever_preco_lstm"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "lstm_05",
+    "query": "Quais sao as projecoes do modelo LSTM para AAPL nos proximos 10 dias?",
+    "category": "tool_lstm",
+    "ticker": "AAPL",
+    "tools_expected": [
+      "prever_preco_lstm"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "multi_01",
+    "query": "Considerando o ultimo 10-K, o preco atual e a projecao LSTM, devo comprar AAPL?",
+    "category": "multi_hop",
+    "ticker": "AAPL",
+    "tools_expected": [
+      "buscar_em_filings",
+      "consultar_preco"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "multi_02",
+    "query": "A Microsoft esta bem posicionada considerando o 10-K e o preco recente?",
+    "category": "multi_hop",
+    "ticker": "MSFT",
+    "tools_expected": [
+      "buscar_em_filings",
+      "consultar_preco"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "multi_03",
+    "query": "Compare os riscos mencionados no 10-K da Apple e da NVIDIA.",
+    "category": "multi_hop",
+    "ticker": null,
+    "tools_expected": [
+      "buscar_em_filings",
+      "consultar_preco"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "multi_04",
+    "query": "O sentimento do mercado sobre a META justifica o preco atual?",
+    "category": "multi_hop",
+    "ticker": "META",
+    "tools_expected": [
+      "buscar_em_filings",
+      "consultar_preco"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "multi_05",
+    "query": "Dado o 10-K e as previsoes, quais riscos eu corro investindo na AAPL?",
+    "category": "multi_hop",
+    "ticker": "AAPL",
+    "tools_expected": [
+      "buscar_em_filings",
+      "consultar_preco"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "multi_06",
+    "query": "Avalie o NVDA combinando os fatores de risco do 10-K com a performance de preco recente.",
+    "category": "multi_hop",
+    "ticker": "NVDA",
+    "tools_expected": [
+      "buscar_em_filings",
+      "consultar_preco"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  },
+  {
+    "id": "multi_07",
+    "query": "Resuma a tese de investimento da Apple usando o ultimo 10-K, o preco atual e a projecao LSTM.",
+    "category": "multi_hop",
+    "ticker": "AAPL",
+    "tools_expected": [
+      "buscar_em_filings",
+      "consultar_preco"
+    ],
+    "expected_answer": "<EDITAR: resposta esperada com base no filing/dado>",
+    "expected_contexts": []
+  }
+]

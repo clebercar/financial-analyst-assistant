@@ -1,0 +1,182 @@
+[
+  {
+    "id": "rag_01",
+    "query": "Quais os principais fatores de risco mencionados no ultimo 10-K da Apple?",
+    "category": "rag_pure",
+    "ticker": "AAPL",
+    "tools_expected": ["buscar_em_filings"],
+    "expected_answer": "Os principais fatores de risco no 10-K mais recente da Apple incluem: (i) condicoes macroeconomicas globais e cambiais que podem afetar demanda e custos; (ii) competicao intensa em smartphones, computadores pessoais, tablets e servicos; (iii) dependencia de fornecedores e parceiros de manufatura concentrados, principalmente na Asia; (iv) riscos relacionados a propriedade intelectual e litigio; (v) risco regulatorio (anti-truste, App Store, privacidade); (vi) cybersecurity e protecao de dados; e (vii) sensibilidade a ciclos de produto e a um numero pequeno de produtos chave (iPhone). Fonte: 10-K Apple (CIK 0000320193).",
+    "expected_contexts": []
+  },
+  {
+    "id": "rag_02",
+    "query": "Como a Microsoft descreve sua estrategia de cloud no ultimo 10-K?",
+    "category": "rag_pure",
+    "ticker": "MSFT",
+    "tools_expected": ["buscar_em_filings"],
+    "expected_answer": "A Microsoft descreve uma estrategia 'cloud-first' centrada em Azure (IaaS/PaaS), Microsoft 365 (SaaS) e Dynamics 365, com forte integracao de IA generativa via parceria com a OpenAI e produtos Copilot. O segmento Intelligent Cloud (incluindo Azure) e descrito como o motor primario de crescimento, com investimentos pesados em infraestrutura de data centers e GPUs para suportar cargas de IA. Fonte: 10-K Microsoft.",
+    "expected_contexts": []
+  },
+  {
+    "id": "rag_03",
+    "query": "Quais segmentos de receita do Google tem maior margem segundo o ultimo 10-K?",
+    "category": "rag_pure",
+    "ticker": "GOOGL",
+    "tools_expected": ["buscar_em_filings"],
+    "expected_answer": "Segundo o ultimo 10-K da Alphabet, o segmento Google Services (incluindo Search, YouTube ads, Network e Subscriptions) e o de maior margem operacional, sustentado por Search publicitario. Google Cloud melhorou de prejuizo para lucratividade nos ultimos exercicios mas ainda tem margens menores que Services. Other Bets (Waymo, Verily) operam com margens negativas. Fonte: 10-K Alphabet.",
+    "expected_contexts": []
+  },
+  {
+    "id": "rag_04",
+    "query": "O que a NVIDIA diz sobre concentracao de clientes no 10-K?",
+    "category": "rag_pure",
+    "ticker": "NVDA",
+    "tools_expected": ["buscar_em_filings"],
+    "expected_answer": "No 10-K mais recente, a NVIDIA divulga concentracao significativa de receita em poucos clientes - tipicamente alguns hyperscalers (provedores de cloud) representam parcela material da receita do segmento Data Center. A perda de qualquer cliente grande, ou reducao de pedidos, poderia afetar materialmente os resultados. Fonte: 10-K NVIDIA, secao Risk Factors.",
+    "expected_contexts": []
+  },
+  {
+    "id": "rag_05",
+    "query": "Quais os principais investimentos da Meta em IA no ultimo 10-K?",
+    "category": "rag_pure",
+    "ticker": "META",
+    "tools_expected": ["buscar_em_filings"],
+    "expected_answer": "A Meta divulga investimentos pesados em infraestrutura de IA (GPUs e data centers) para treinar e servir modelos como o Llama, com aumento substancial em capex. A empresa enfatiza IA generativa em Family of Apps (recomendacao de feed, Reels, ads automation) e Reality Labs (assistentes em oculos/AR). Fonte: 10-K Meta Platforms.",
+    "expected_contexts": []
+  },
+  {
+    "id": "rag_06",
+    "query": "Como a Apple aborda riscos cambiais no 10-K?",
+    "category": "rag_pure",
+    "ticker": "AAPL",
+    "tools_expected": ["buscar_em_filings"],
+    "expected_answer": "A Apple reconhece exposicao significativa a cambio porque uma parcela majoritaria de sua receita vem de fora dos EUA (principalmente Greater China, Europa e Japao). A empresa usa instrumentos derivativos (forwards, opcoes) como hedge parcial mas nao elimina o risco. Movimentos adversos no dolar tendem a reduzir a receita reportada e podem afetar margens. Fonte: 10-K Apple, Quantitative and Qualitative Disclosures about Market Risk.",
+    "expected_contexts": []
+  },
+  {
+    "id": "rag_07",
+    "query": "Quais as obrigacoes legais pendentes da Microsoft no ultimo 10-Q?",
+    "category": "rag_pure",
+    "ticker": "MSFT",
+    "tools_expected": ["buscar_em_filings"],
+    "expected_answer": "O 10-Q da Microsoft cita litigios e investigacoes anti-truste em curso (incluindo escrutinio regulatorio sobre a aquisicao da Activision e sobre praticas em cloud), litigios de patentes, casos de propriedade intelectual e investigacoes regulatorias em multiplas jurisdicoes (EUA, UE, Reino Unido). A empresa avalia que materialidade individual das contingencias e baixa, mas mantem provisoes onde aplicavel. Fonte: 10-Q Microsoft, Note on Contingencies.",
+    "expected_contexts": []
+  },
+  {
+    "id": "rag_08",
+    "query": "Que compromissos ESG o Google divulga no 10-K?",
+    "category": "rag_pure",
+    "ticker": "GOOGL",
+    "tools_expected": ["buscar_em_filings"],
+    "expected_answer": "A Alphabet divulga metas de net-zero ate 2030 com foco em rodar data centers e escritorios em energia 24/7 livre de carbono, eficiencia de PUE em data centers, governanca de IA responsavel e diversidade da forca de trabalho. Reconhece desafio crescente de emissoes indiretas devido a expansao de IA. Fonte: 10-K Alphabet, secoes Human Capital e ESG.",
+    "expected_contexts": []
+  },
+  {
+    "id": "simple_01",
+    "query": "Qual o preco atual da NVDA?",
+    "category": "tool_simple",
+    "ticker": "NVDA",
+    "tools_expected": ["consultar_preco"],
+    "expected_answer": "O preco atual de fechamento da NVDA (NVIDIA Corporation), em USD, e o ultimo valor retornado pelo Yahoo Finance via a tool consultar_preco. A resposta deve incluir o ticker NVDA, o preco em USD, a variacao percentual nos ultimos 30 dias e o volume medio. Esta e uma analise educacional, nao recomendacao financeira.",
+    "expected_contexts": []
+  },
+  {
+    "id": "simple_02",
+    "query": "Como a META se comportou nos ultimos 30 dias?",
+    "category": "tool_simple",
+    "ticker": "META",
+    "tools_expected": ["consultar_preco"],
+    "expected_answer": "A resposta deve trazer a variacao percentual de preco da META nos ultimos 30 dias (calculada como (preco_atual - preco_30d_atras) / preco_30d_atras * 100) e o volume medio de negociacao no periodo, conforme retornado por yfinance. Fonte: Yahoo Finance, periodo de 30 dias terminando em hoje.",
+    "expected_contexts": []
+  },
+  {
+    "id": "simple_03",
+    "query": "Qual o volume medio de negociacao da AAPL?",
+    "category": "tool_simple",
+    "ticker": "AAPL",
+    "tools_expected": ["consultar_preco"],
+    "expected_answer": "O volume medio diario de negociacao da AAPL nos ultimos 30 dias, conforme calculado pela tool consultar_preco a partir dos dados do Yahoo Finance. Tipicamente, AAPL negocia entre 40 e 80 milhoes de acoes por dia. A resposta deve citar a fonte (Yahoo Finance) e a janela de 30 dias.",
+    "expected_contexts": []
+  },
+  {
+    "id": "simple_04",
+    "query": "O sentimento do trecho 'Apple posted record revenue this quarter' e positivo?",
+    "category": "tool_simple",
+    "ticker": null,
+    "tools_expected": ["analisar_sentimento"],
+    "expected_answer": "Sim, o sentimento e positivo. O trecho 'Apple posted record revenue this quarter' indica receita recorde, claramente uma noticia positiva sob a otica de analise financeira. O classificador (treinado em FinancialPhraseBank) deve retornar 'positive' com alta confianca.",
+    "expected_contexts": []
+  },
+  {
+    "id": "lstm_01",
+    "query": "Qual sua previsao de preco da AAPL para os proximos 5 dias?",
+    "category": "tool_lstm",
+    "ticker": "AAPL",
+    "tools_expected": ["prever_preco_lstm"],
+    "expected_answer": "A tool prever_preco_lstm retorna 5 valores previstos (um por dia util, recursivamente) usando o modelo LSTM treinado em historico AAPL 2018-2024. A resposta deve listar os 5 dias com o preco previsto em USD e mencionar limitacoes (modelo univariado em close, nao captura eventos de mercado). Esta e uma analise educacional, nao recomendacao financeira.",
+    "expected_contexts": []
+  },
+  {
+    "id": "lstm_02",
+    "query": "Projete o preco da AAPL para 3 dias uteis.",
+    "category": "tool_lstm",
+    "ticker": "AAPL",
+    "tools_expected": ["prever_preco_lstm"],
+    "expected_answer": "A resposta deve listar 3 dias uteis com preco_previsto em USD, gerados pela tool prever_preco_lstm com dias=3. Deve incluir aviso de que o modelo foi treinado apenas em AAPL e que esta e uma analise educacional, nao recomendacao financeira.",
+    "expected_contexts": []
+  },
+  {
+    "id": "lstm_03",
+    "query": "Faca uma previsao de preco para a NVDA usando o modelo LSTM (5 dias).",
+    "category": "tool_lstm",
+    "ticker": "NVDA",
+    "tools_expected": ["prever_preco_lstm"],
+    "expected_answer": "A tool prever_preco_lstm retorna 5 dias previstos para NVDA, mas a resposta DEVE explicitar o aviso de dominio: 'modelo treinado apenas em AAPL - previsao para outros tickers e experimental'. A confiabilidade da projecao para NVDA e baixa. Esta e uma analise educacional, nao recomendacao financeira.",
+    "expected_contexts": []
+  },
+  {
+    "id": "multi_01",
+    "query": "Considerando o ultimo 10-K, o preco atual e a projecao LSTM, devo comprar AAPL?",
+    "category": "multi_hop",
+    "ticker": "AAPL",
+    "tools_expected": ["buscar_em_filings", "consultar_preco", "prever_preco_lstm"],
+    "expected_answer": "A resposta deve combinar (i) fatores de risco e oportunidades do 10-K da Apple (concentracao iPhone, exposicao China, P&D em servicos e IA), (ii) preco atual e variacao 30d via consultar_preco, e (iii) projecao LSTM para os proximos dias. Deve OBRIGATORIAMENTE concluir com 'Esta e uma analise educacional, nao recomendacao financeira' e nao recomendar diretamente comprar/vender. Fontes citadas: 10-K Apple, Yahoo Finance, modelo LSTM.",
+    "expected_contexts": []
+  },
+  {
+    "id": "multi_02",
+    "query": "A Microsoft esta bem posicionada considerando o 10-K e o preco recente?",
+    "category": "multi_hop",
+    "ticker": "MSFT",
+    "tools_expected": ["buscar_em_filings", "consultar_preco"],
+    "expected_answer": "A resposta deve sumarizar a estrategia de cloud + IA descrita no 10-K da Microsoft (Azure, Copilot, parceria OpenAI), trazer o preco atual e variacao 30d da MSFT via consultar_preco, e fazer uma analise equilibrada citando ambos. Deve incluir disclaimer de 'analise educacional, nao recomendacao financeira'. Fontes: 10-K Microsoft + Yahoo Finance.",
+    "expected_contexts": []
+  },
+  {
+    "id": "multi_03",
+    "query": "Compare os riscos mencionados no 10-K da Apple e da NVIDIA.",
+    "category": "multi_hop",
+    "ticker": null,
+    "tools_expected": ["buscar_em_filings"],
+    "expected_answer": "Riscos comuns citados: competicao, exposicao internacional/cambial, dependencia de fornecedores asiaticos e risco regulatorio. Especificos AAPL: concentracao em iPhone, App Store anti-truste, ciclos de produto. Especificos NVDA: concentracao de clientes (poucos hyperscalers), controles de exportacao para China, dependencia de TSMC para foundry, ciclos de demanda em data center/AI. Fontes: 10-K Apple e 10-K NVIDIA.",
+    "expected_contexts": []
+  },
+  {
+    "id": "multi_04",
+    "query": "O sentimento do mercado sobre a META justifica o preco atual?",
+    "category": "multi_hop",
+    "ticker": "META",
+    "tools_expected": ["consultar_preco", "analisar_sentimento", "buscar_em_filings"],
+    "expected_answer": "A resposta deve trazer o preco atual e variacao 30d da META via consultar_preco, mencionar drivers de sentimento (resultados, IA, Reality Labs) com base no 10-K, e abster-se de afirmar valuation justa/injusta. Deve incluir 'Esta e uma analise educacional, nao recomendacao financeira'. Fontes: Yahoo Finance + 10-K Meta.",
+    "expected_contexts": []
+  },
+  {
+    "id": "multi_05",
+    "query": "Dado o 10-K e as previsoes, quais riscos eu corro investindo na AAPL?",
+    "category": "multi_hop",
+    "ticker": "AAPL",
+    "tools_expected": ["buscar_em_filings", "prever_preco_lstm"],
+    "expected_answer": "Riscos a citar com base no 10-K AAPL: concentracao em iPhone, exposicao a China e cambial, regulacao da App Store, ciclos de produto, cybersecurity. Risco da projecao LSTM: modelo univariado em close, treinado em janela passada, nao captura eventos exogenos (anuncios de produtos, mudancas macro). Resposta deve incluir disclaimer 'analise educacional, nao recomendacao financeira'. Fontes: 10-K Apple e modelo LSTM v0.1.0.",
+    "expected_contexts": []
+  }
+]
