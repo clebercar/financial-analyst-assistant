@@ -14,6 +14,8 @@ build/
 models/*.keras
 models/*.joblib
 models/*.png
+*.keras
+*.pt
 !models/.gitkeep
 
 # IDE e OS
@@ -24,10 +26,10 @@ models/*.png
 # Ambiente
 .env
 .env.*
+!.env.example
 
 # Claude
 .claude/
-CLAUDE.md
 
 # Arquivos pessoais (nao fazem parte da entrega)
 roteiro-apresentacao.md
@@ -36,7 +38,17 @@ perguntas-guia-aprendizado.md
 # Docker
 *.log
 
-# Pytest
+# Pytest / Coverage
 .pytest_cache/
 .coverage
+coverage.xml
 htmlcov/
+test-results.xml
+
+# MLflow / RAG / Datathon artefatos
+mlruns/
+chroma_db/
+data/raw/*
+data/filings/*
+data/processed/*
+!data/**/.gitkeep
