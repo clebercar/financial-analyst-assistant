@@ -149,3 +149,19 @@ def test_prever_preco_lstm_outro_ticker_avisa(monkeypatch):
     result = prever_preco_lstm("MSFT", dias=2)
     assert "treinado apenas em AAPL" in result.get("aviso", "")
     assert result["ticker"] == "MSFT"
+
+
+def test_analisar_sentimento(monkeypatch):
+    """analisar_sentimento deve usar o pipeline mockado e retornar dict {sentimento, confianca}."""
+    from src.agent import tools as tools_mod
+    from src.agent.tools import analisar_sentimento
+
+    pipe = MagicMock()
+    pipe.predict.return_value = ["positive"]
+    pipe.predict_proba.return_value = [[0.05, 0.10, 0.85]]
+    pipe.classes_ = ["negative", "neutral", "positive"]
+    monkeypatch.setattr(tools_mod, "_get_sentiment_pipeline", lambda: pipe)
+
+    result = analisar_sentimento("Earnings beat expectations")
+    assert result["sentimento"] == "positive"
+    assert result["confianca"] > 0.8

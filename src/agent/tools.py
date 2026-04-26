@@ -154,3 +154,30 @@ def prever_preco_lstm(ticker: str, dias: int = 5) -> dict:
         "modelo_versao": "0.1.0",
         "aviso": aviso,
     }
+
+
+def _get_sentiment_pipeline() -> Any:
+    """Carrega o classificador de sentimento (sklearn Pipeline) lazy."""
+    global _SENTIMENT_PIPELINE
+    if _SENTIMENT_PIPELINE is None:
+        _SENTIMENT_PIPELINE = joblib.load("models/sentiment_classifier.joblib")
+    return _SENTIMENT_PIPELINE
+
+
+def analisar_sentimento(texto: str) -> dict:
+    """Classifica sentimento de um trecho financeiro (positive/neutral/negative).
+
+    Args:
+        texto: trecho de texto em ingles (modelo treinado em FinancialPhraseBank).
+
+    Returns:
+        dict com sentimento (str) e confianca (float em [0, 1]). Em erro:
+        {"erro": "..."}.
+    """
+    try:
+        pipe = _get_sentiment_pipeline()
+    except FileNotFoundError:
+        return {"erro": "classificador nao treinado - rode `make train-sentiment`"}
+    from src.models.sentiment_classifier import predict_sentiment
+
+    return predict_sentiment(texto, pipe)
