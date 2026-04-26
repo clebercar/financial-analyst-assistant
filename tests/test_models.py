@@ -40,3 +40,28 @@ def test_lstm_deterministic():
         out1 = model(x)
         out2 = model(x)
     assert torch.allclose(out1, out2)
+
+
+def test_lstm_one_step_overfits_tiny_batch():
+    """Smoke: em 1 batch pequeno o modelo tem que reduzir o loss em poucas epochs.
+
+    Se isso falhar, tem algo errado no forward/backward (gradiente nao flui,
+    detach indevido, etc.). E um teste barato que pega bugs grosseiros antes
+    do treino real (que demora minutos).
+    """
+    torch.manual_seed(0)
+    model = LSTMRegressor(hidden_size=10, num_layers=1, dropout=0.0, dense_size=5)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    criterion = torch.nn.MSELoss()
+    x = torch.randn(8, 60, 1)
+    y = torch.randn(8, 1)
+
+    losses = []
+    for _ in range(20):
+        optimizer.zero_grad()
+        loss = criterion(model(x), y)
+        loss.backward()
+        optimizer.step()
+        losses.append(loss.item())
+
+    assert losses[-1] < losses[0], "Modelo nao esta aprendendo em batch trivial"
