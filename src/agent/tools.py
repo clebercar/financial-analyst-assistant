@@ -181,3 +181,27 @@ def analisar_sentimento(texto: str) -> dict:
     from src.models.sentiment_classifier import predict_sentiment
 
     return predict_sentiment(texto, pipe)
+
+
+def _rag_retrieve(query: str, ticker: str | None, top_k: int) -> list[dict]:
+    """Wrapper fino para o pipeline RAG (facilita mock em testes)."""
+    from src.agent.rag_pipeline import _gemini_embed, get_collection, retrieve
+
+    coll = get_collection()
+    return retrieve(query, coll, _gemini_embed, top_k=top_k, ticker_filter=ticker)
+
+
+def buscar_em_filings(query: str, ticker: str | None = None, top_k: int = 3) -> dict:
+    """Busca trechos relevantes em filings 10-K e 10-Q da SEC via RAG.
+
+    Args:
+        query: pergunta ou termos em linguagem natural.
+        ticker: filtro opcional - so retorna chunks deste ticker.
+        top_k: quantos trechos retornar.
+
+    Returns:
+        dict com `chunks` (lista de dicts com ticker, tipo, ano, secao, trecho,
+        distance) e `total_encontrado` (int).
+    """
+    chunks = _rag_retrieve(query, ticker, top_k)
+    return {"chunks": chunks, "total_encontrado": len(chunks)}

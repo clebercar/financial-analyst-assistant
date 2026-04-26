@@ -165,3 +165,45 @@ def test_analisar_sentimento(monkeypatch):
     result = analisar_sentimento("Earnings beat expectations")
     assert result["sentimento"] == "positive"
     assert result["confianca"] > 0.8
+
+
+def test_buscar_em_filings(monkeypatch):
+    """buscar_em_filings deve delegar pra _rag_retrieve e empacotar resultado."""
+    from src.agent import tools as tools_mod
+    from src.agent.tools import buscar_em_filings
+
+    fake_chunks = [
+        {
+            "ticker": "AAPL",
+            "tipo": "10-K",
+            "ano": "2024",
+            "secao": "Risk Factors",
+            "trecho": "...",
+            "distance": 0.2,
+        }
+    ]
+    monkeypatch.setattr(tools_mod, "_rag_retrieve", lambda q, t, k: fake_chunks)  # noqa: ARG005
+
+    result = buscar_em_filings("Apple risks", ticker="AAPL", top_k=1)
+    assert result["chunks"] == fake_chunks
+    assert result["total_encontrado"] == 1
+
+
+def test_buscar_em_filings_sem_filtro_ticker(monkeypatch):
+    """buscar_em_filings sem ticker deve passar None pro retrieve."""
+    from src.agent import tools as tools_mod
+    from src.agent.tools import buscar_em_filings
+
+    captured = {}
+
+    def fake_retrieve(query, ticker, top_k):  # noqa: ARG001
+        captured["ticker"] = ticker
+        captured["top_k"] = top_k
+        return []
+
+    monkeypatch.setattr(tools_mod, "_rag_retrieve", fake_retrieve)
+
+    result = buscar_em_filings("query qualquer", top_k=2)
+    assert captured["ticker"] is None
+    assert captured["top_k"] == 2
+    assert result["total_encontrado"] == 0
