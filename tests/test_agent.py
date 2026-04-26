@@ -2,6 +2,8 @@
 
 from unittest.mock import MagicMock
 
+import numpy as np
+
 
 def test_chunking_splits_long_text():
     """Texto longo deve ser quebrado em multiplos chunks com tamanho controlado."""
@@ -77,3 +79,73 @@ def test_consultar_preco_basico(monkeypatch):
     from datetime import datetime
 
     datetime.fromisoformat(result["timestamp"])
+
+
+def test_prever_preco_lstm_aapl(monkeypatch):
+    """prever_preco_lstm com ticker AAPL deve retornar previsoes sem aviso de dominio."""
+    import torch
+
+    from src.agent import tools as tools_mod
+    from src.agent.tools import prever_preco_lstm
+
+    class FakeModel:
+        def eval(self):
+            pass
+
+        def __call__(self, x):  # noqa: ARG002
+            return torch.tensor([[0.5]])
+
+    class FakeScaler:
+        def transform(self, x):
+            return x
+
+        def inverse_transform(self, x):
+            return x * 200  # escala fake
+
+    monkeypatch.setattr(tools_mod, "_get_lstm_model", lambda: (FakeModel(), FakeScaler()))
+    monkeypatch.setattr(
+        tools_mod,
+        "_get_recent_prices",
+        lambda ticker, days=60: np.linspace(100, 110, 60),  # noqa: ARG005
+    )
+
+    result = prever_preco_lstm("AAPL", dias=3)
+    assert result["ticker"] == "AAPL"
+    assert len(result["previsoes"]) == 3
+    # Cada previsao tem dia (1..N) e preco_previsto
+    assert {"dia", "preco_previsto"} <= set(result["previsoes"][0].keys())
+    # AAPL e o ticker treinado: aviso vazio
+    assert result["aviso"] == ""
+
+
+def test_prever_preco_lstm_outro_ticker_avisa(monkeypatch):
+    """Tickers != AAPL recebem aviso explicito de dominio fora-da-distribuicao."""
+    import torch
+
+    from src.agent import tools as tools_mod
+    from src.agent.tools import prever_preco_lstm
+
+    class FakeModel:
+        def eval(self):
+            pass
+
+        def __call__(self, x):  # noqa: ARG002
+            return torch.tensor([[0.5]])
+
+    class FakeScaler:
+        def transform(self, x):
+            return x
+
+        def inverse_transform(self, x):
+            return x * 200
+
+    monkeypatch.setattr(tools_mod, "_get_lstm_model", lambda: (FakeModel(), FakeScaler()))
+    monkeypatch.setattr(
+        tools_mod,
+        "_get_recent_prices",
+        lambda ticker, days=60: np.linspace(200, 210, 60),  # noqa: ARG005
+    )
+
+    result = prever_preco_lstm("MSFT", dias=2)
+    assert "treinado apenas em AAPL" in result.get("aviso", "")
+    assert result["ticker"] == "MSFT"
