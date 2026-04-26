@@ -1,0 +1,36 @@
+lstm:
+  ticker: AAPL
+  start_date: "2018-01-01"
+  end_date: "2024-12-31"
+  sequence_length: 60
+  test_size: 0.2
+  hidden_size: 50
+  num_layers: 2
+  dropout: 0.2
+  dense_size: 25
+  epochs: 50
+  batch_size: 32
+  learning_rate: 0.001
+
+sentiment:
+  dataset: "financial_phrasebank"
+  config: "sentences_75agree"  # subset com >= 75% concordância de anotadores
+  test_size: 0.2
+  random_state: 42
+  vectorizer:
+    ngram_range: [1, 2]
+    max_features: 5000
+    min_df: 2
+
+rag:
+  chunk_size: 800
+  chunk_overlap: 100
+  embedding_model: "models/text-embedding-004"
+  top_k: 3
+  collection_name: "sec_filings"
+
+agent:
+  llm_model: "gemini-2.0-flash"
+  temperature: 0.0
+  max_iterations: 10
+  max_input_chars: 4096
