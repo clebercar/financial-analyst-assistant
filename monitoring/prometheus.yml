@@ -1,0 +1,12 @@
+# Configuracao do Prometheus para o Datathon Fase 5.
+# Faz scrape do endpoint /metrics da API a cada 5s.
+global:
+  scrape_interval: 5s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: financial-agent-api
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - api:8000

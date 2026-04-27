@@ -1,0 +1,13 @@
+# Provisionamento dos dashboards a partir do JSON em /etc/grafana/provisioning/dashboards.
+apiVersion: 1
+
+providers:
+  - name: financial-agent
+    orgId: 1
+    folder: ""
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

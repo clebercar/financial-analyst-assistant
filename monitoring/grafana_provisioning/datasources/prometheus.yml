@@ -1,0 +1,11 @@
+# Provisionamento automatico do datasource Prometheus no Grafana.
+# Quando o container sobe, o Grafana ja vem configurado pra ler do Prometheus.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true

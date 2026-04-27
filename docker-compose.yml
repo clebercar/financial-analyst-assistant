@@ -1,13 +1,16 @@
 services:
   api:
     build: .
-    container_name: lstm-stock-api
+    container_name: financial-agent-api
     ports:
       - "8000:8000"
-    volumes:
-      - ./models:/app/models:ro
+    env_file: .env
     environment:
       - PYTHONPATH=/app
+    volumes:
+      - ./models:/app/models:ro
+      - ./chroma_db:/app/chroma_db
+      - ./mlruns:/app/mlruns
     restart: unless-stopped
     healthcheck:
       test:
@@ -21,3 +24,38 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: financial-agent-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    restart: unless-stopped
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: financial-agent-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+    volumes:
+      - ./monitoring/grafana_provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus_data:
+  grafana_data:
