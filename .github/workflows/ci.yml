@@ -1,0 +1,77 @@
+name: Datathon CI
+
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'evaluation/**'
+      - 'pyproject.toml'
+      - 'Dockerfile'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'evaluation/**'
+      - 'pyproject.toml'
+      - 'Dockerfile'
+      - '.github/workflows/ci.yml'
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]"
+          python -m spacy download en_core_web_sm
+          python -m spacy download pt_core_news_sm
+
+      - name: Lint (ruff)
+        run: ruff check src/ tests/ evaluation/
+
+      - name: Type check (mypy)
+        run: mypy src/ --ignore-missing-imports
+        continue-on-error: true  # mypy nao-bloqueante por enquanto
+
+      - name: Security scan (bandit)
+        run: bandit -r src/ -ll
+        continue-on-error: true
+
+      - name: Unit tests
+        run: |
+          pytest tests/ \
+            --cov=src \
+            --cov-report=xml \
+            --cov-fail-under=60 \
+            --junitxml=test-results.xml
+        env:
+          GEMINI_API_KEY: dummy-key-for-tests
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            test-results.xml
+            coverage.xml
+
+  build:
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t datathon-api:${{ github.sha }} .
