@@ -25,6 +25,8 @@ from src.monitoring.prometheus_metrics import (
     registrar_erro,
     registrar_requisicao,
 )
+from src.security.input_guardrail import validate_input
+from src.security.output_guardrail import sanitize_output
 from src.serving.schemas import ChatRequest, ChatResponse, HealthResponse
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -101,6 +103,14 @@ async def chat(req: ChatRequest) -> ChatResponse:
     """
     t0 = time.time()
     try:
+        # Camada 1 (input guardrail): roda ANTES de qualquer chamada cara.
+        # Bloqueio aqui evita pagar custo Gemini em prompt injection trivial.
+        ok, motivo = validate_input(req.pergunta)
+        if not ok:
+            pm.chat_requests_total.labels(status="blocked_input").inc()
+            logger.warning("Input bloqueado pelo guardrail: %s", motivo)
+            raise HTTPException(status_code=400, detail=motivo)
+
         try:
             agent = get_agent()
         except RuntimeError as e:
@@ -126,8 +136,12 @@ async def chat(req: ChatRequest) -> ChatResponse:
         pm.chat_iterations.observe(len(intermediate))
         pm.chat_requests_total.labels(status="success").inc()
 
+        # Camada 2 (output guardrail): redaciona PII antes de devolver.
+        resposta_bruta = result.get("output", "")
+        resposta_sanitizada = sanitize_output(resposta_bruta)
+
         return ChatResponse(
-            resposta=result.get("output", ""),
+            resposta=resposta_sanitizada,
             iteracoes=len(intermediate),
             tools_chamadas=tools_used,
         )
