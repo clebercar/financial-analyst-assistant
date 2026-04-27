@@ -62,19 +62,28 @@ class AgentExecutor:
         max_iterations: int = 10,
         verbose: bool = True,
         handle_parsing_errors: bool = True,
+        callbacks: list[Any] | None = None,
     ) -> None:
         self.agent = agent
         self.tools = tools
         self.max_iterations = max_iterations
         self.verbose = verbose
         self.handle_parsing_errors = handle_parsing_errors
+        # Lista de callbacks (ex: Langfuse CallbackHandler) repassados no
+        # invoke do langgraph via RunnableConfig.
+        self.callbacks: list[Any] = callbacks or []
 
     def invoke(self, payload: dict) -> dict:
         """Roda o agente sobre `payload['input']` e devolve dict legado."""
         pergunta = payload["input"]
+        config: dict[str, Any] = {"recursion_limit": self.max_iterations * 2}
+        if self.callbacks:
+            # Langgraph (1.x) aceita `callbacks` no RunnableConfig — eles
+            # sao injetados em todas as Runnable internas (LLM + tools).
+            config["callbacks"] = self.callbacks
         result = self.agent.invoke(
             {"messages": [HumanMessage(content=pergunta)]},
-            config={"recursion_limit": self.max_iterations * 2},
+            config=config,
         )
         messages = result.get("messages", [])
 
@@ -158,12 +167,18 @@ def _build_tools() -> list[StructuredTool]:
     ]
 
 
-def create_financial_agent(model_name: str | None = None) -> AgentExecutor:
+def create_financial_agent(
+    model_name: str | None = None,
+    callbacks: list[Any] | None = None,
+) -> AgentExecutor:
     """Cria agente ReAct configurado para analise financeira.
 
     Args:
         model_name: nome do modelo Gemini (override do `agent.llm_model` do
             `configs/model_config.yaml`). Util pro benchmark do Dia 6.
+        callbacks: lista opcional de callbacks (ex: Langfuse) que serao
+            repassados via RunnableConfig em cada invoke. Permite tracing
+            transparente sem acoplar o agente ao Langfuse.
 
     Returns:
         AgentExecutor adapter pronto pra invoke({"input": pergunta}).
@@ -195,4 +210,5 @@ def create_financial_agent(model_name: str | None = None) -> AgentExecutor:
         verbose=True,
         max_iterations=cfg["max_iterations"],
         handle_parsing_errors=True,
+        callbacks=callbacks,
     )
