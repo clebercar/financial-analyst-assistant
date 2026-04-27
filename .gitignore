@@ -53,3 +53,7 @@ data/raw/*
 data/filings/*
 data/processed/*
 !data/**/.gitkeep
+
+# Drift report HTML (pesado, gerado on-demand via `make drift`).
+# Mantemos summary.json no repo pra evidenciar que rodou.
+evaluation/results/drift/*.html

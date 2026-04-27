@@ -1,0 +1,9 @@
+{
+  "drifted_columns_count": 0.0,
+  "drifted_columns_share": 0.0,
+  "n_columns": 2,
+  "column_pvalues": {
+    "Close": 0.98616817825361,
+    "Volume": 0.1999568775644726
+  }
+}
