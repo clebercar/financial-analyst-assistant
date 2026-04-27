@@ -13,10 +13,12 @@ o que quebraria os testes que nao tem chave configurada.
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
 
+from src.monitoring import prometheus_metrics as pm
 from src.monitoring.prometheus_metrics import (
     medir_tempo,
     metricas_response,
@@ -52,14 +54,19 @@ def get_agent() -> Any:
        testes unitarios).
     2. Evita pagar o custo de inicializacao do langgraph antes da primeira
        requisicao real chegar.
+
+    Tambem tenta anexar o callback do Langfuse via env vars; se ausente,
+    cria o agente sem tracing (comportamento totalmente opt-in).
     """
     global _AGENT
     if _AGENT is None:
         # Import local (lazy) pra que o `from src.serving.app import app` nao
         # carregue langchain/langgraph se a API for usada so para /health.
         from src.agent.react_agent import create_financial_agent
+        from src.monitoring.langfuse_tracer import get_langfuse_callback
 
-        _AGENT = create_financial_agent()
+        cb = get_langfuse_callback()
+        _AGENT = create_financial_agent(callbacks=[cb] if cb else None)
     return _AGENT
 
 
@@ -84,28 +91,50 @@ async def health_check() -> HealthResponse:
 @app.post("/chat", response_model=ChatResponse, tags=["Agente"])
 @medir_tempo(endpoint="/chat")
 async def chat(req: ChatRequest) -> ChatResponse:
-    """Roda o agente ReAct sobre a pergunta e retorna resposta + tools usadas."""
-    try:
-        agent = get_agent()
-    except RuntimeError as e:
-        # GEMINI_API_KEY ausente ou config invalida.
-        registrar_erro()
-        raise HTTPException(status_code=503, detail=str(e)) from e
+    """Roda o agente ReAct sobre a pergunta e retorna resposta + tools usadas.
 
+    Metricas Prometheus registradas (em try/except/finally pra cobrir sucesso E erro):
+    - chat_requests_total{status=success|error}
+    - chat_tool_calls_total{tool_name=<tool>}
+    - chat_latency_seconds (histograma)
+    - chat_iterations (histograma)
+    """
+    t0 = time.time()
     try:
-        result = agent.invoke({"input": req.pergunta})
-    except Exception as e:
-        registrar_erro()
-        logger.exception("Erro ao executar agente")
-        raise HTTPException(status_code=500, detail=f"Erro no agente: {e}") from e
+        try:
+            agent = get_agent()
+        except RuntimeError as e:
+            # GEMINI_API_KEY ausente ou config invalida.
+            registrar_erro()
+            pm.chat_requests_total.labels(status="error").inc()
+            raise HTTPException(status_code=503, detail=str(e)) from e
 
-    intermediate = result.get("intermediate_steps", []) or []
-    tools_used = [step[0].tool for step in intermediate]
-    return ChatResponse(
-        resposta=result.get("output", ""),
-        iteracoes=len(intermediate),
-        tools_chamadas=tools_used,
-    )
+        try:
+            result = agent.invoke({"input": req.pergunta})
+        except Exception as e:
+            registrar_erro()
+            pm.chat_requests_total.labels(status="error").inc()
+            logger.exception("Erro ao executar agente")
+            raise HTTPException(status_code=500, detail=f"Erro no agente: {e}") from e
+
+        intermediate = result.get("intermediate_steps", []) or []
+        tools_used = [step[0].tool for step in intermediate]
+
+        # Sucesso: registra contadores e histogramas das tools/iteracoes.
+        for tool_name in tools_used:
+            pm.chat_tool_calls_total.labels(tool_name=tool_name).inc()
+        pm.chat_iterations.observe(len(intermediate))
+        pm.chat_requests_total.labels(status="success").inc()
+
+        return ChatResponse(
+            resposta=result.get("output", ""),
+            iteracoes=len(intermediate),
+            tools_chamadas=tools_used,
+        )
+    finally:
+        # Latencia ENTRA tanto em sucesso quanto em erro (HTTPException
+        # propaga depois deste finally executar).
+        pm.chat_latency_seconds.observe(time.time() - t0)
 
 
 @app.get("/metrics", tags=["Monitoramento"])

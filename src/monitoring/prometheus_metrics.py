@@ -40,6 +40,37 @@ erros_modelo = Counter(
     "Total de erros durante a inferencia do modelo",
 )
 
+# ---------------------------------------------------------------------------
+# Metricas especificas do endpoint /chat (agente ReAct)
+# ---------------------------------------------------------------------------
+# Mantemos as metricas legadas acima (compatibilidade com dashboards antigos)
+# e adicionamos abaixo as 4 metricas exigidas pelo Datathon Fase 5:
+# requests, tools chamadas, latencia, iteracoes.
+
+chat_requests_total = Counter(
+    "chat_requests_total",
+    "Total de requisicoes /chat por status (success/error)",
+    ["status"],
+)
+
+chat_tool_calls_total = Counter(
+    "chat_tool_calls_total",
+    "Total de chamadas a cada tool do agente",
+    ["tool_name"],
+)
+
+chat_latency_seconds = Histogram(
+    "chat_latency_seconds",
+    "Latencia do endpoint /chat em segundos",
+    buckets=(0.5, 1, 2, 5, 10, 30, 60),
+)
+
+chat_iterations = Histogram(
+    "chat_iterations",
+    "Numero de iteracoes (intermediate_steps) do agente por request",
+    buckets=(1, 2, 3, 5, 7, 10),
+)
+
 
 def registrar_requisicao(metodo: str, endpoint: str, status: int) -> None:
     requisicoes_total.labels(metodo=metodo, endpoint=endpoint, status=str(status)).inc()
