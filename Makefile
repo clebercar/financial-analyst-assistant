@@ -43,7 +43,11 @@ index-rag:
 	python -m src.agent.rag_pipeline --reindex
 
 smoke:
-	@echo "Smoke test manual: subir docker-compose, hit /chat com curl"
+	@echo "Smoke test end-to-end: roda 5 queries + 2 cenarios red team contra agente real"
+	python -m scripts.smoke_test
+
+smoke-docker:
+	@echo "Smoke test via docker-compose"
 	docker-compose up -d
 	sleep 5
 	curl -s http://localhost:8000/health | jq
