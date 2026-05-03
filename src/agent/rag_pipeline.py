@@ -3,7 +3,7 @@
 Responsabilidade:
 1. `chunk_text`: quebrar texto longo em pedacos com overlap.
 2. `_clean_html`: remover lixo SGML/HTML do submission da SEC.
-3. `_gemini_embed`: gerar embedding via Gemini text-embedding-004.
+3. `_gemini_embed`: gerar embedding via Gemini gemini-embedding-001.
 4. `get_collection`: factory do ChromaDB persistente.
 5. `retrieve`: busca top-k chunks por similaridade.
 6. `index_filings`: pipeline batch para indexar todos os filings em data/filings.
@@ -66,7 +66,7 @@ def _clean_html(raw: str) -> str:
 
 def _gemini_embed(
     text: str,
-    model: str = "models/text-embedding-004",
+    model: str = "models/gemini-embedding-001",
     task_type: str = "retrieval_document",
 ) -> list[float]:
     """Embedding via Gemini. Levanta RuntimeError se nao houver API key."""

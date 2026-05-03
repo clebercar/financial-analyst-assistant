@@ -1,9 +1,9 @@
 """Benchmark de 3 configuracoes do agente conforme requisito do Datathon.
 
 Configuracoes comparadas:
-- A_baseline       : modelo gemini-2.0-flash, top_k=3.
+- A_baseline       : modelo gemini-2.5-flash, top_k=3.
 - B_more_context   : mesmo modelo, top_k=5 (mais contexto no RAG).
-- C_smaller_model  : modelo gemini-1.5-flash-8b, top_k=3 (modelo menor).
+- C_smaller_model  : modelo gemini-2.5-flash-lite, top_k=3 (modelo menor).
 
 Para cada configuracao rodamos um subset do golden set, medindo:
 - latencia media por pergunta (segundos)
@@ -30,21 +30,21 @@ logger = logging.getLogger(__name__)
 CONFIGS: list[dict[str, Any]] = [
     {
         "id": "A_baseline",
-        "model": "gemini-2.0-flash",
+        "model": "gemini-2.5-flash",
         "top_k": 3,
-        "desc": "Baseline: Gemini 2.0 Flash + top_k=3",
+        "desc": "Baseline: Gemini 2.5 Flash + top_k=3",
     },
     {
         "id": "B_more_context",
-        "model": "gemini-2.0-flash",
+        "model": "gemini-2.5-flash",
         "top_k": 5,
         "desc": "Mais contexto: top_k=5",
     },
     {
         "id": "C_smaller_model",
-        "model": "gemini-1.5-flash-8b",
+        "model": "gemini-2.5-flash-lite",
         "top_k": 3,
-        "desc": "Modelo menor: Gemini 1.5 Flash 8B",
+        "desc": "Modelo menor: Gemini 2.5 Flash Lite",
     },
 ]
 

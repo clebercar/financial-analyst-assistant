@@ -25,12 +25,12 @@ sentiment:
 rag:
   chunk_size: 800
   chunk_overlap: 100
-  embedding_model: "models/text-embedding-004"
+  embedding_model: "models/gemini-embedding-001"
   top_k: 3
   collection_name: "sec_filings"
 
 agent:
-  llm_model: "gemini-2.0-flash"
+  llm_model: "gemini-2.5-flash"
   temperature: 0.0
   max_iterations: 10
   max_input_chars: 4096

@@ -45,7 +45,7 @@ def judge_response(
     question: str,
     answer: str,
     criteria: dict[str, str],
-    model: str = "gemini-2.0-flash",
+    model: str = "gemini-2.5-flash",
 ) -> dict[str, float | None]:
     """Avalia uma unica (pergunta, resposta) em multiplos criterios.
 
@@ -86,7 +86,7 @@ def judge_response(
 def evaluate_with_judge(
     golden_path: str = "data/golden_set/golden_set.json",
     output_path: str = "evaluation/results/judge_scores.json",
-    model: str = "gemini-2.0-flash",
+    model: str = "gemini-2.5-flash",
 ) -> list[dict[str, Any]]:
     """Roda o agente sobre o golden set e avalia cada resposta com o juiz LLM.
 
