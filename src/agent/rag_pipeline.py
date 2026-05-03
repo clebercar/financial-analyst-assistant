@@ -57,9 +57,25 @@ def chunk_text(text: str, chunk_size: int = 800, overlap: int = 100) -> list[str
 
 
 def _clean_html(raw: str) -> str:
-    """Remove tags HTML/SGML e ruido do submission da SEC."""
-    text = re.sub(r"<[^>]+>", " ", raw)
-    text = re.sub(r"&nbsp;|&amp;|&#\d+;|&lt;|&gt;|&quot;", " ", text)
+    """Remove tags HTML/SGML, XBRL e ruido do submission da SEC.
+
+    SEC full-submission.txt mistura o documento principal com XBRL,
+    anexos e tabelas financeiras estruturadas que poluem o RAG.
+    """
+    # Remove blocos XBRL (ix:..., us-gaap:..., dei:..., xbrli:...) inteiros
+    text = re.sub(
+        r"<(ix|us-gaap|dei|xbrli|xbrldi|link|xlink|xsi):[^>]*>.*?</\1:[^>]+>",
+        " ",
+        raw,
+        flags=re.DOTALL | re.IGNORECASE,
+    )
+    # Remove tags simples remanescentes
+    text = re.sub(r"<[^>]+>", " ", text)
+    # Remove sequências longas de números/datas (tabelas financeiras)
+    text = re.sub(r"(\b[\d,.\-$()%]+\s+){8,}", " ", text)
+    # Remove entidades HTML
+    text = re.sub(r"&[a-zA-Z]+;|&#\d+;", " ", text)
+    # Normaliza whitespace
     text = re.sub(r"\s+", " ", text)
     return text.strip()
 
@@ -142,8 +158,14 @@ def retrieve(
     return chunks
 
 
-def index_filings() -> int:
+def index_filings(max_chunks_per_filing: int | None = 30) -> int:
     """Le filings em data/filings, faz chunking + embedding + indexa no Chroma.
+
+    Args:
+        max_chunks_per_filing: limite de chunks por filing (None = sem limite).
+            Como SEC full-submission e enorme, limitamos para os primeiros N
+            chunks (onde costuma estar Risk Factors e MD&A — partes mais uteis
+            para analise). Sem isso, free tier do Gemini levaria horas.
 
     Returns:
         numero total de chunks indexados.
@@ -176,8 +198,11 @@ def index_filings() -> int:
 
         raw = fp.read_text(errors="ignore")
         clean = _clean_html(raw)
-        chunks = chunk_text(clean, chunk_size, chunk_overlap)
-        logger.info("%s %s -> %d chunks", ticker, filing_type, len(chunks))
+        all_chunks = chunk_text(clean, chunk_size, chunk_overlap)
+        chunks = all_chunks[:max_chunks_per_filing] if max_chunks_per_filing else all_chunks
+        logger.info(
+            "%s %s -> %d chunks (de %d totais)", ticker, filing_type, len(chunks), len(all_chunks)
+        )
 
         for c in chunks:
             emb = _embed_with_retry(c)
@@ -207,10 +232,16 @@ def index_filings() -> int:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--reindex", action="store_true", help="re-indexa filings em data/filings")
-    parser.add_argument("--limit-chunks-per-filing", type=int, default=None)
+    parser.add_argument(
+        "--limit-chunks-per-filing",
+        type=int,
+        default=30,
+        help="maximo de chunks por filing (default 30; usar 0 para sem limite)",
+    )
     args = parser.parse_args()
     if args.reindex:
-        index_filings()
+        limit = args.limit_chunks_per_filing or None
+        index_filings(max_chunks_per_filing=limit)
 
 
 if __name__ == "__main__":
