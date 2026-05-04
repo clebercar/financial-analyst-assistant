@@ -146,21 +146,49 @@ Diagrama detalhado: ver `docs/SYSTEM_CARD.md`.
 | 3. Avaliacao + Observabilidade     | RAGAS 4 metricas + LLM-judge 3 criterios + Langfuse + Grafana             | OK     |
 | 4. Seguranca + Governanca          | Guardrails I/O + OWASP Top10 LLM (5) + Red Team (5) + Cards + LGPD        | OK     |
 
-### Cobertura dos 9 GAPs do Datathon
+Maturidade MLOps, decisoes de arquitetura, trade-offs e roadmap pos-MVP
+estao detalhados em `docs/SYSTEM_CARD.md`.
 
-| #  | GAP                                  | Status               |
-|----|--------------------------------------|----------------------|
-| 01 | Ausencia de monitoramento            | Total                |
-| 02 | Notebook como SPOF                   | Total                |
-| 03 | Feature store destrutivo             | Parcial / por design |
-| 04 | Cobertura de testes ~0               | Total (72 testes)    |
-| 05 | Sem governanca de versionamento      | Total                |
-| 06 | Sem deteccao de drift                | Minimo               |
-| 07 | Retraining manual                    | Por design           |
-| 08 | Dev sem dados                        | Total                |
-| 09 | Skills gap eng. software             | Total                |
+---
 
-Detalhes e justificativas dos parciais: `docs/SYSTEM_CARD.md`.
+## Resultados de avaliacao
+
+Numeros reais, gerados por `make smoke`, `make eval`, `make benchmark` e
+`python -m evaluation.llm_judge`. Persistidos em `evaluation/results/`.
+
+### Smoke test E2E (agente real, 7 perguntas)
+
+7 / 7 sucesso. Multi-hop usou 4 tools em sequencia
+(`buscar_em_filings -> consultar_preco -> prever_preco_lstm -> buscar_em_filings`)
+em 14.6s.
+
+### Benchmark de 3 configuracoes
+
+| Config             | Modelo                  | top_k | Latencia media |
+|--------------------|-------------------------|-------|----------------|
+| A — baseline       | `gemini-2.5-flash`      | 3     | 7.2 s          |
+| B — mais contexto  | `gemini-2.5-flash`      | 5     | 21.4 s         |
+| C — modelo menor   | `gemini-2.5-flash-lite` | 3     | 2.4 s          |
+
+### RAGAS (golden set 20 itens, 4 metricas obrigatorias)
+
+| Metrica            | Score |
+|--------------------|-------|
+| answer_relevancy   | 0.715 |
+| faithfulness       | 0.254 |
+| context_precision  | 0.308 |
+| context_recall     | 0.146 |
+
+Analise dos resultados (incluindo discussao do `faithfulness` aplicado a
+agentes multi-tool) em `docs/SYSTEM_CARD.md`.
+
+### LLM-as-judge (3 criterios, escala 0-5, n=20)
+
+| Criterio              | Score | Tipo    |
+|-----------------------|-------|---------|
+| coerencia_tecnica     | 4.55  | tecnico |
+| completude            | 3.88  | tecnico |
+| citacao_fontes (KPI)  | 3.25  | negocio |
 
 ---
 
