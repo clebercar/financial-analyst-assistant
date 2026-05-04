@@ -128,17 +128,47 @@ def evaluate_pipeline(
         embeddings=judge_embeddings,
     )
 
+    # RAGAS 0.4 retorna escala por amostra (list[float]). Calculamos a media,
+    # ignorando NaN/None.
+    import math
+
+    def _aggregate(metric: str) -> float:
+        raw = scores[metric]
+        if isinstance(raw, int | float):
+            return float(raw)
+        if hasattr(raw, "tolist"):
+            raw = raw.tolist()
+        clean = [v for v in raw if v is not None and not (isinstance(v, float) and math.isnan(v))]
+        return float(sum(clean) / len(clean)) if clean else 0.0
+
+    def _per_sample(metric: str) -> list[float | None]:
+        raw = scores[metric]
+        if hasattr(raw, "tolist"):
+            raw = raw.tolist()
+        if isinstance(raw, list):
+            return [
+                None if (v is None or (isinstance(v, float) and math.isnan(v))) else float(v)
+                for v in raw
+            ]
+        return [float(raw)]
+
     out = {
-        "faithfulness": float(scores["faithfulness"]),
-        "answer_relevancy": float(scores["answer_relevancy"]),
-        "context_precision": float(scores["context_precision"]),
-        "context_recall": float(scores["context_recall"]),
+        "faithfulness": _aggregate("faithfulness"),
+        "answer_relevancy": _aggregate("answer_relevancy"),
+        "context_precision": _aggregate("context_precision"),
+        "context_recall": _aggregate("context_recall"),
         "n_items": len(rows),
+        "per_sample": {
+            "faithfulness": _per_sample("faithfulness"),
+            "answer_relevancy": _per_sample("answer_relevancy"),
+            "context_precision": _per_sample("context_precision"),
+            "context_recall": _per_sample("context_recall"),
+        },
     }
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(out, f, indent=2, ensure_ascii=False)
-    logger.info("RAGAS scores: %s", out)
+    logger.info("RAGAS scores agregados: %s", {k: v for k, v in out.items() if k != "per_sample"})
     return out
 
 
