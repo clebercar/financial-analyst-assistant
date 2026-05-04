@@ -82,8 +82,16 @@ def evaluate_pipeline(
     """
     # Imports tardios: evita carregar ragas/agent quando o modulo e importado
     # apenas para inspecao (ex: pytest).
+    import os
+
     from datasets import Dataset
+    from langchain_google_genai import (
+        ChatGoogleGenerativeAI,
+        GoogleGenerativeAIEmbeddings,
+    )
     from ragas import evaluate
+    from ragas.embeddings import LangchainEmbeddingsWrapper
+    from ragas.llms import LangchainLLMWrapper
     from ragas.metrics import (
         answer_relevancy,
         context_precision,
@@ -103,9 +111,21 @@ def evaluate_pipeline(
 
     rows = _build_rag_rows(golden, agent, retrieve_fn)
     ds = Dataset.from_list(rows)
+
+    # RAGAS por padrao usa OpenAI; passamos Gemini via LangChain wrappers
+    # pra reutilizar a chave gratuita ja configurada.
+    api_key = os.getenv("GEMINI_API_KEY")
+    judge_llm = LangchainLLMWrapper(
+        ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=api_key, temperature=0.0)
+    )
+    judge_embeddings = LangchainEmbeddingsWrapper(
+        GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001", google_api_key=api_key)
+    )
     scores = evaluate(
         ds,
         metrics=[faithfulness, answer_relevancy, context_precision, context_recall],
+        llm=judge_llm,
+        embeddings=judge_embeddings,
     )
 
     out = {

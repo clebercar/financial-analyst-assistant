@@ -130,6 +130,20 @@ def test_evaluate_pipeline_smoke(
     fake_rag_pipeline.retrieve = fake_retrieve  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "src.agent.rag_pipeline", fake_rag_pipeline)
 
+    # Mocks dos wrappers Gemini para nao precisar de chave real durante testes.
+    fake_lc_genai = types.ModuleType("langchain_google_genai")
+    fake_lc_genai.ChatGoogleGenerativeAI = MagicMock(return_value="fake_chat_llm")  # type: ignore[attr-defined]
+    fake_lc_genai.GoogleGenerativeAIEmbeddings = MagicMock(return_value="fake_emb")  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "langchain_google_genai", fake_lc_genai)
+
+    fake_ragas_embeddings = types.ModuleType("ragas.embeddings")
+    fake_ragas_embeddings.LangchainEmbeddingsWrapper = MagicMock(return_value="wrapped_emb")  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "ragas.embeddings", fake_ragas_embeddings)
+
+    fake_ragas_llms = types.ModuleType("ragas.llms")
+    fake_ragas_llms.LangchainLLMWrapper = MagicMock(return_value="wrapped_llm")  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "ragas.llms", fake_ragas_llms)
+
     fake_react = types.ModuleType("src.agent.react_agent")
     fake_react.create_financial_agent = fake_create_agent  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "src.agent.react_agent", fake_react)
