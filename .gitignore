@@ -28,8 +28,17 @@ models/*.png
 .env.*
 !.env.example
 
-# Claude
+# Ferramentas de assistencia ao dev (locais, nao fazem parte da entrega)
 .claude/
+CLAUDE.md
+docs/superpowers/
+docs/slides.html
+AGENTS.md
+.cursor/
+.cursorrules
+.aider*
+.windsurf/
+GEMINI.md
 
 # Arquivos pessoais (nao fazem parte da entrega)
 roteiro-apresentacao.md

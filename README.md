@@ -176,8 +176,6 @@ Detalhes e justificativas dos parciais: `docs/SYSTEM_CARD.md`.
 | [Red Team Report](docs/RED_TEAM_REPORT.md)                 | 5 cenarios adversariais executados                   |
 | [Pitch slides](docs/PITCH.md)                              | Slides Marp pra apresentacao                         |
 | [Roteiro do video](docs/INSTRUCOES_VIDEO.md)               | Como gravar a demo de 8-10 min                       |
-| [Design spec](docs/superpowers/specs/2026-04-26-datathon-fase05-design.md) | Spec completo (~1500 linhas)         |
-| [Plano de implementacao](docs/superpowers/plans/2026-04-26-datathon-fase05-implementacao.md) | Plano dia-a-dia |
 
 ---
 
