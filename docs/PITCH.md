@@ -101,6 +101,44 @@ embeddings `gemini-embedding-001` (3072 dims), ChromaDB persistido.
 
 ---
 
+## Avaliacao RAGAS (golden set 20 pares, real)
+
+| Metrica            | Score  | Interpretacao                                        |
+|--------------------|--------|------------------------------------------------------|
+| answer_relevancy   | **0.715** | Respostas relevantes a pergunta                   |
+| faithfulness       | 0.254  | Baixo (ver analise abaixo)                           |
+| context_precision  | 0.308  | Chunks nem sempre uteis                              |
+| context_recall     | 0.146  | Cobertura limitada do ground truth                   |
+
+**Analise honesta dos numeros baixos:**
+
+- **Faithfulness baixo (0.25):** RAGAS so "ve" os chunks de RAG nos contexts.
+  Mas nosso agente usa 4 tools - preco (yfinance), LSTM, sentimento, RAG.
+  Quando o agente responde sobre preco atual, RAGAS marca "nao suportado"
+  porque nao ve o yfinance nos contexts. Isso e um **artefato de aplicar RAGAS
+  a agente multi-tool**, nao falha do agente.
+- **Context recall/precision baixos:** indexamos apenas 30 chunks por filing
+  (primeiros do doc, onde fica Risk Factors/MD&A). Topicos especificos como
+  ESG ou compromissos legais podem estar mais adiante.
+
+**Roadmap RAGAS:**
+1. Indexar mais chunks por filing (50-100) ou usar parsing semantico que
+   identifica secoes (Item 1A, Item 7) e prioriza-as.
+2. Adaptar metodologia: capturar **todas** as observacoes de tools como
+   `contexts` (nao so o RAG) para RAGAS faithfulness ser justa.
+
+**LLM-as-judge (3 criterios, escala 0-5, n=20):**
+
+| Criterio              | Score  | Tipo     |
+|-----------------------|--------|----------|
+| coerencia_tecnica     | **4.55** | tecnico  |
+| completude            | 3.88   | tecnico  |
+| citacao_fontes (KPI)  | 3.25   | negocio  |
+
+KPI de negocio (citation rate proxy): 3.25/5 - margem clara para melhorar.
+
+---
+
 ## Benchmark de 3 configuracoes (real, n=5 queries cada)
 
 | Config             | Modelo                | top_k | Sucesso | Latencia media |

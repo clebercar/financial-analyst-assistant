@@ -1,0 +1,162 @@
+[
+  {
+    "id": "rag_01",
+    "scores": {
+      "coerencia_tecnica": 5.0,
+      "citacao_fontes": 5.0,
+      "completude": 5.0
+    }
+  },
+  {
+    "id": "rag_02",
+    "scores": {
+      "coerencia_tecnica": 5.0,
+      "citacao_fontes": 5.0,
+      "completude": 5.0
+    }
+  },
+  {
+    "id": "rag_03",
+    "scores": {
+      "coerencia_tecnica": 5.0,
+      "citacao_fontes": 0.0,
+      "completude": 0.0
+    }
+  },
+  {
+    "id": "rag_04",
+    "scores": {
+      "coerencia_tecnica": 1.0,
+      "citacao_fontes": 2.0,
+      "completude": 1.0
+    }
+  },
+  {
+    "id": "rag_05",
+    "scores": {
+      "coerencia_tecnica": 5.0,
+      "citacao_fontes": 4.5,
+      "completude": 5.0
+    }
+  },
+  {
+    "id": "rag_06",
+    "scores": {
+      "coerencia_tecnica": 5.0,
+      "citacao_fontes": 1.5,
+      "completude": 3.0
+    }
+  },
+  {
+    "id": "rag_07",
+    "scores": {
+      "coerencia_tecnica": 5.0,
+      "citacao_fontes": 5.0,
+      "completude": 3.0
+    }
+  },
+  {
+    "id": "rag_08",
+    "scores": {
+      "coerencia_tecnica": 5.0,
+      "citacao_fontes": 5.0,
+      "completude": 5.0
+    }
+  },
+  {
+    "id": "simple_01",
+    "scores": {
+      "coerencia_tecnica": 0.0,
+      "citacao_fontes": 1.7,
+      "completude": 3.5
+    }
+  },
+  {
+    "id": "simple_02",
+    "scores": {
+      "coerencia_tecnica": 5.0,
+      "citacao_fontes": 3.3,
+      "completude": 5.0
+    }
+  },
+  {
+    "id": "simple_03",
+    "scores": {
+      "coerencia_tecnica": 5.0,
+      "citacao_fontes": 0.0,
+      "completude": 0.0
+    }
+  },
+  {
+    "id": "simple_04",
+    "scores": {
+      "coerencia_tecnica": 5.0,
+      "citacao_fontes": 0.0,
+      "completude": 5.0
+    }
+  },
+  {
+    "id": "lstm_01",
+    "scores": {
+      "coerencia_tecnica": 5.0,
+      "citacao_fontes": 1.7,
+      "completude": 5.0
+    }
+  },
+  {
+    "id": "lstm_02",
+    "scores": {
+      "coerencia_tecnica": 5.0,
+      "citacao_fontes": 3.5,
+      "completude": 5.0
+    }
+  },
+  {
+    "id": "lstm_03",
+    "scores": {
+      "coerencia_tecnica": 5.0,
+      "citacao_fontes": 1.7,
+      "completude": 2.0
+    }
+  },
+  {
+    "id": "multi_01",
+    "scores": {
+      "coerencia_tecnica": 5.0,
+      "citacao_fontes": 5.0,
+      "completude": 5.0
+    }
+  },
+  {
+    "id": "multi_02",
+    "scores": {
+      "coerencia_tecnica": 5.0,
+      "citacao_fontes": 5.0,
+      "completude": 5.0
+    }
+  },
+  {
+    "id": "multi_03",
+    "scores": {
+      "coerencia_tecnica": 5.0,
+      "citacao_fontes": 5.0,
+      "completude": 5.0
+    }
+  },
+  {
+    "id": "multi_04",
+    "scores": {
+      "coerencia_tecnica": 5.0,
+      "citacao_fontes": 5.0,
+      "completude": 5.0
+    }
+  },
+  {
+    "id": "multi_05",
+    "scores": {
+      "coerencia_tecnica": 5.0,
+      "citacao_fontes": 5.0,
+      "completude": 5.0
+    }
+  }
+]
