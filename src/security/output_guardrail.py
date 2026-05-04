@@ -23,13 +23,26 @@ from __future__ import annotations
 import logging
 
 from presidio_analyzer import AnalyzerEngine
+from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
 
 logger = logging.getLogger(__name__)
 
+# Configuracao explicita do NLP engine: usa os modelos spaCy "small" para PT
+# e EN. O default do Presidio tenta `en_core_web_lg` (~400 MB), que e demais
+# para nosso caso de uso e infla a imagem Docker desnecessariamente.
+_NLP_CONFIG = {
+    "nlp_engine_name": "spacy",
+    "models": [
+        {"lang_code": "en", "model_name": "en_core_web_sm"},
+        {"lang_code": "pt", "model_name": "pt_core_news_sm"},
+    ],
+}
+_nlp_engine = NlpEngineProvider(nlp_configuration=_NLP_CONFIG).create_engine()
+
 # Engines do Presidio sao caros pra construir (carregam spaCy). Mantemos
 # instancias modulo-globais — thread-safe pra leitura, que e o nosso caso.
-_analyzer = AnalyzerEngine()
+_analyzer = AnalyzerEngine(nlp_engine=_nlp_engine, supported_languages=["en", "pt"])
 _anonymizer = AnonymizerEngine()
 
 # Entidades alvo. Note: CPF nao e nativo do Presidio mas EMAIL/PHONE casam o
