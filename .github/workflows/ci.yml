@@ -43,11 +43,10 @@ jobs:
 
       - name: Type check (mypy)
         run: mypy src/ --ignore-missing-imports
-        continue-on-error: true  # mypy nao-bloqueante por enquanto
 
       - name: Security scan (bandit)
         run: bandit -r src/ -ll
-        continue-on-error: true
+        continue-on-error: true  # bandit produz falsos positivos com frequencia; advisory por ora
 
       - name: Unit tests
         run: |
