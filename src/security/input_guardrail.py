@@ -5,13 +5,12 @@ Aplica duas camadas defensivas no input do `/chat`:
 1. **Tamanho maximo** (`MAX_LENGTH = 4096`): limita custo + reduz superficie de ataque.
 2. **Padroes regex** (`INJECTION_PATTERNS`): detecta tentativas comuns de prompt
    injection (jailbreaks, role override, leak do system prompt). E uma defesa
-   *barata* e *rapida* — nao substitui guardrails baseados em LLM (Llama Guard,
-   etc), que ficaram fora do MVP por custo de inferencia.
+   *barata* e *rapida* — nao substitui guardrails baseados em LLM (ex: Llama Guard).
 
 Limitacoes conhecidas (documentadas em `docs/RED_TEAM_REPORT.md`):
 - nao decodifica base64/hex (cenario 3 do red team passa);
-- nao cobre injection multi-turno (memoria do agente nao e persistida no MVP);
-- regex e em ingles + portugues basico — pode falhar em portugues sofisticado.
+- nao cobre injection multi-turno;
+- regex em ingles + portugues basico — pode falhar em portugues sofisticado.
 """
 
 from __future__ import annotations

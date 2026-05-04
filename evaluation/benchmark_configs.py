@@ -1,4 +1,4 @@
-"""Benchmark de 3 configuracoes do agente conforme requisito do Datathon.
+"""Benchmark comparando 3 configuracoes do agente.
 
 Configuracoes comparadas:
 - A_baseline       : modelo gemini-2.5-flash, top_k=3.

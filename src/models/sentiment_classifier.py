@@ -10,10 +10,10 @@ Por que TF-IDF + LogReg em vez de transformer?
 - Bom o suficiente: F1 macro ~70-75% no FinancialPhraseBank
 - Sem GPU necessaria pra treino nem pra inferencia
 
-Tags MLflow padronizadas (alinhadas ao schema do Datathon Fase 5):
+Tags MLflow padronizadas:
 - model_type=classification
 - risk_level=medium (errar sentimento de noticia nao tem o mesmo impacto
-  de errar previsao de preco usado em ordem de compra)
+  de errar previsao de preco usada em ordem de compra)
 """
 
 import logging
@@ -151,11 +151,11 @@ def train_sentiment(config: dict) -> str:
                 "model_version": "0.1.0",
                 "model_type": "classification",
                 "training_data_version": cfg["config"],
-                "owner": "cleber",
+                "owner": "ml-team",
                 "risk_level": "medium",
                 "fairness_checked": "false",
                 "git_sha": _git_sha(),
-                "phase": "datathon-fase05",
+                "phase": "production-mvp",
             }
         )
 

@@ -48,11 +48,11 @@ def download_filings(
     if filing_types is None:
         filing_types = FILING_TYPES
 
-    user_agent = os.getenv("SEC_USER_AGENT", "Cleber Carvalho contato@example.com")
+    user_agent = os.getenv("SEC_USER_AGENT", "Financial Analyst Assistant contact@example.com")
     # Esperado formato "Nome Email"; partimos para passar separado pro Downloader 5.x
     parts = user_agent.split(" ", 1)
-    company_name = parts[0] if parts else "Datathon-MLET"
-    email_address = parts[-1] if len(parts) > 1 else "contato@example.com"
+    company_name = parts[0] if parts else "Financial-Analyst-Assistant"
+    email_address = parts[-1] if len(parts) > 1 else "contact@example.com"
 
     output_dir.mkdir(parents=True, exist_ok=True)
     dl = Downloader(company_name, email_address, str(output_dir))

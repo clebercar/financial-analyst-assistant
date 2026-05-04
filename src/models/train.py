@@ -1,17 +1,16 @@
 """Pipeline de treinamento com MLflow tracking padronizado.
 
 Treina LSTM PyTorch ou classificador de sentimento sklearn dependendo do
-argumento --model. Loga tudo no MLflow seguindo o schema obrigatorio do
-Datathon Fase 5:
+argumento --model. Loga tudo no MLflow seguindo schema padronizado:
 
-Tags padronizadas (obrigatorias em TODA run):
+Tags obrigatorias em TODA run:
 - model_name, model_version, model_type
 - training_data_version
 - owner, risk_level, fairness_checked
 - git_sha, phase
 
 Metricas (regressao):
-- mae, rmse, mape (em escala desnormalizada, $USD)
+- mae, rmse, mape (em escala desnormalizada, USD)
 
 Artifacts:
 - models/lstm_torch.pt (state_dict do modelo)
@@ -19,7 +18,7 @@ Artifacts:
 
 Uso:
     python -m src.models.train --model lstm
-    python -m src.models.train --model sentiment  # implementado no Dia 3
+    python -m src.models.train --model sentiment
 """
 
 import argparse
@@ -38,10 +37,6 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from src.data.collector import baixar_dados_acao
 from src.models.lstm_torch import LSTMRegressor
-
-# Reusamos o preprocessing da Fase 4 (sobreviveu ao refactor do Dia 1).
-# Os nomes sao "normalizar_dados" + "criar_scaler" (em vez de "normalizar_precos"
-# do plano original). Adaptado aqui para nao quebrar a API legada.
 from src.models.preprocessing import criar_scaler, criar_sequencias, normalizar_dados
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -66,10 +61,10 @@ def _git_sha() -> str:
 
 
 def _set_standard_tags(model_type: str, model_name: str, training_data_version: str) -> None:
-    """Aplica as tags padronizadas obrigatorias do Datathon Fase 5.
+    """Aplica o schema padronizado de tags em toda run.
 
     Toda run tem que ter essas tags. Se alguma faltar, o run nao e considerado
-    valido pra deploy/monitoramento.
+    valido para deploy/monitoramento.
     """
     mlflow.set_tags(
         {
@@ -77,11 +72,11 @@ def _set_standard_tags(model_type: str, model_name: str, training_data_version: 
             "model_version": "0.1.0",
             "model_type": model_type,
             "training_data_version": training_data_version,
-            "owner": "cleber",
+            "owner": "ml-team",
             "risk_level": "high",
             "fairness_checked": "false",
             "git_sha": _git_sha(),
-            "phase": "datathon-fase05",
+            "phase": "production-mvp",
         }
     )
 
@@ -199,7 +194,7 @@ def train_lstm(config: dict) -> str:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Pipeline de treino do Datathon Fase 5")
+    parser = argparse.ArgumentParser(description="Pipeline de treino dos modelos baseline")
     parser.add_argument(
         "--model",
         choices=["lstm", "sentiment"],
@@ -215,7 +210,6 @@ def main() -> None:
         run_id = train_lstm(config)
         logger.info("LSTM treinado com sucesso. run_id=%s", run_id)
     elif args.model == "sentiment":
-        # Implementado no Dia 3
         from src.models.sentiment_classifier import train_sentiment
 
         run_id = train_sentiment(config)

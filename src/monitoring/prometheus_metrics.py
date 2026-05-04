@@ -43,9 +43,11 @@ erros_modelo = Counter(
 # ---------------------------------------------------------------------------
 # Metricas especificas do endpoint /chat (agente ReAct)
 # ---------------------------------------------------------------------------
-# Mantemos as metricas legadas acima (compatibilidade com dashboards antigos)
-# e adicionamos abaixo as 4 metricas exigidas pelo Datathon Fase 5:
-# requests, tools chamadas, latencia, iteracoes.
+# Quatro metricas principais do agente:
+#   - requests por status
+#   - tools chamadas (por tool_name)
+#   - latencia
+#   - iteracoes (loops do ReAct)
 
 chat_requests_total = Counter(
     "chat_requests_total",

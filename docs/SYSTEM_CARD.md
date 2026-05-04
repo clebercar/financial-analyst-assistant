@@ -1,14 +1,14 @@
-# System Card - Assistente de Analista Financeiro
+# System Card
 
 ## 1. Visao Geral
 
 Assistente conversacional que ajuda analistas de buy-side a avaliar acoes
-combinando RAG sobre filings 10-K/10-Q da SEC, consulta de precos via
-Yahoo Finance, previsao com modelo LSTM, e classificacao de sentimento via
-TF-IDF + Logistic Regression. Orquestrado por agente ReAct com Gemini 2.0
-Flash, exposto por API FastAPI com observabilidade ponta-a-ponta.
+combinando RAG sobre filings 10-K/10-Q da SEC, consulta de precos via Yahoo
+Finance, previsao com modelo LSTM e classificacao de sentimento via TF-IDF +
+Logistic Regression. Orquestrado por agente ReAct com Gemini 2.5 Flash,
+exposto por API FastAPI com observabilidade ponta-a-ponta.
 
-### Diagrama de arquitetura (texto)
+### Diagrama de arquitetura
 
 ```
                          USUARIO (analista)
@@ -17,23 +17,22 @@ Flash, exposto por API FastAPI com observabilidade ponta-a-ponta.
                                   v
                   +-------------------------------+
                   |   API FastAPI                 |
-                  |   POST /chat (principal)      |
-                  |   POST /predict (legado F4)   |
+                  |   POST /chat                  |
                   |   GET /health, /metrics       |
                   +---------------+---------------+
                                   |
         +-------------------------+-------------------------+
         v                         v                         v
   Input Guardrail           Agente ReAct            Output Guardrail
-  (regex inj +              (Gemini 2.5 Flash)      (Presidio PII)
-   max length)              max_iter=10
+  (regex anti-injection +   (Gemini 2.5 Flash)      (Presidio PII)
+   max length 4096)         max_iter=10
                                   |
         +-------------+-----------+-----------+-------------+
-        v             v           v           v             v
-   consultar      prever        analisar   buscar_em      (futuro:
-   _preco         _preco_lstm   _sentimento _filings      mais tools)
-   (yfinance)     (PyTorch)     (sklearn)  (ChromaDB
-                                            + RAG)
+        v             v           v           v
+   consultar      prever        analisar   buscar_em
+   _preco         _preco_lstm   _sentimento _filings
+   (yfinance)     (PyTorch)     (sklearn)   (ChromaDB
+                                             + RAG)
 
    +-----------------------------------------------------------+
    |  OBSERVABILIDADE (em paralelo)                            |
@@ -48,7 +47,7 @@ Flash, exposto por API FastAPI com observabilidade ponta-a-ponta.
 | Componente   | Tecnologia                          | Responsabilidade                  |
 |--------------|-------------------------------------|-----------------------------------|
 | API          | FastAPI                             | Servir endpoints HTTP             |
-| Agente       | LangChain ReAct + Gemini 2.5 Flash  | Orquestrar tools                  |
+| Agente       | LangGraph ReAct + Gemini 2.5 Flash  | Orquestrar tools                  |
 | RAG          | ChromaDB + Gemini embeddings        | Retrieval de filings              |
 | Tools (4)    | yfinance, PyTorch LSTM, sklearn, RAG| Capacidades especificas           |
 | Tracking     | MLflow                              | Registro de experimentos          |
@@ -57,36 +56,22 @@ Flash, exposto por API FastAPI com observabilidade ponta-a-ponta.
 | Drift        | Evidently                           | Estabilidade de features          |
 | Guardrails   | regex + Presidio                    | Seguranca I/O                     |
 
-## 3. Cobertura dos 9 GAPs do Datathon
+## 3. Decisoes de Arquitetura
 
-| #  | GAP do guia                          | Cobertura            | Como demonstramos                                                                                  |
-|----|--------------------------------------|----------------------|----------------------------------------------------------------------------------------------------|
-| 01 | Ausencia de monitoramento            | Total                | Prometheus + Langfuse + Grafana                                                                    |
-| 02 | Notebook como SPOF                   | Total                | Codigo modular em `src/`, notebooks so EDA                                                         |
-| 03 | Feature store destrutivo             | Parcial / por design | Nao temos feature store (justificado nessa Secao 4.2 como consciente do anti-padrao)               |
-| 04 | Cobertura de testes ~0               | Total                | pytest `--cov-fail-under=60`, schemas pandera                                                      |
-| 05 | Sem governanca de versionamento      | Total                | MLflow com schema obrigatorio de tags + Model Card                                                 |
-| 06 | Sem deteccao de drift                | Minimo               | Relatorio Evidently offline (nao retrigger automatico)                                             |
-| 07 | Retraining manual                    | Por design           | Champion-challenger descrito nessa Secao 4.3, nao implementado                                     |
-| 08 | Dev sem dados                        | Total                | Fixtures sinteticos + dados publicos                                                               |
-| 09 | Skills gap eng. software             | Total                | Type hints, docstrings, logging estruturado, pyproject.toml, ruff/mypy/bandit                      |
-
-**Estrategia para os 3 parciais (03, 06, 07):** honestidade tecnica neste
-System Card. Em vez de implementacao superficial, descrevemos o problema, a
-abordagem proposta e por que ficou fora do MVP de 9 dias.
-
-## 4. Trade-offs e Decisoes
-
-### 4.1 LLM hosted (Gemini API) vs self-hosted quantizado
+### 3.1 LLM hosted (Gemini API) vs self-hosted quantizado
 
 **Decisao:** hosted via API.
 
-**Por que:** self-hosting + quantizacao (vLLM/BentoML) tomaria 1+ semana
-sozinho. MVP precisa caber em 9 dias.
+**Motivacao:** complexidade operacional de manter LLM self-hosted (vLLM/BentoML
++ quantizacao + monitoramento de GPU) nao se justifica para o escopo do
+sistema. Provedores hosted oferecem alta disponibilidade, atualizacoes
+automaticas e custo previsivel para cargas baixas/medias.
 
-**Roadmap pos-MVP:** servir Llama-3.1-8B quantizado 4-bit via vLLM, comparar
-faithfulness e custo com Gemini hosted. Configuracao inicial:
+**Quando reconsiderar:** se o volume de requests crescer ao ponto de o custo
+mensal hosted ultrapassar o TCO de uma instancia GPU dedicada, ou se houver
+requisito regulatorio de "dados nao saem do perimetro".
 
+**Setup futuro proposto:**
 ```yaml
 vllm:
   model: meta-llama/Meta-Llama-3.1-8B-Instruct
@@ -94,25 +79,31 @@ vllm:
   gpu_memory_utilization: 0.9
 ```
 
-### 4.2 Sem feature store (cobre GAP 03)
+### 3.2 Sem feature store
 
-**Decisao:** nao implementar.
+**Decisao:** persistencia direta via `joblib` para o classificador de
+sentimento; sem store intermediaria de features.
 
-**Por que:** projeto tem 2 modelos com features simples (precos
-normalizados, TF-IDF). Feature store agregaria overhead sem ROI no MVP.
+**Motivacao:** com 2 modelos e features simples (precos normalizados,
+TF-IDF), uma feature store agregaria latencia, custo de operacao e
+overhead de schema sem reuso real.
 
-**Estamos cientes do anti-padrao:** se escalassemos para >10 modelos,
-implementariamos com upsert incremental (nunca FLUSHALL + bulk load - que
-e o anti-padrao classico que o Datathon menciona).
+**Anti-padrao a evitar quando escalar:** atualizacao destrutiva (FLUSHALL +
+bulk load) — janela de store vazio causa decisoes erradas em producao. Se
+esse projeto adotar feature store no futuro, deve usar upsert incremental
+com TTL.
 
-### 4.3 Drift detection offline (cobre GAP 06 e 07)
+### 3.3 Drift detection offline
 
-**Decisao:** apenas relatorio Evidently sob demanda (`make drift`).
+**Decisao:** relatorio Evidently sob demanda (`make drift`); sem retrigger
+automatico.
 
-**Por que:** retrigger automatico exige champion-challenger pipeline
-funcional - nao cabe no MVP.
+**Motivacao:** retrigger automatico exige champion-challenger pipeline
+funcional, que requer ambiente de producao com trafego real. Em ambiente de
+desenvolvimento, o relatorio offline atende para auditoria periodica e
+investigacao de incidentes.
 
-**Roadmap (champion-challenger):**
+**Pipeline futuro proposto:**
 ```
 [drift detector] --PSI > 0.2--> [retrain job] --> [shadow inference]
                                                        |
@@ -126,67 +117,71 @@ funcional - nao cabe no MVP.
                        [promote challenger -> champion]
 ```
 
-### 4.4 Apenas testes unitarios
+### 3.4 Apenas testes unitarios
 
-**Decisao consciente do autor:** sem integration tests automatizados.
+**Decisao:** suite de testes unitarios com dependencias externas mockadas;
+sem integration tests automatizados em CI.
 
-**Trade-off:** maior risco de regressao silenciosa em integracoes externas
-(Gemini API, yfinance, ChromaDB).
+**Motivacao:** os testes unitarios validam contratos e logica isoladamente,
+rodam em segundos e nao consomem rate limit da Gemini API. Integration
+tests reais exigiriam credenciais e injetariam custo/instabilidade no CI.
 
-**Mitigacao:** `make smoke` rodado manualmente antes de cada release; CI
-nao executa rede externa.
+**Mitigacao:** o script `make smoke` faz validacao end-to-end manual contra
+o agente real (5 queries representativas + 2 cenarios de red team) e
+persiste o resultado em `evaluation/results/smoke_test.json`. Recomenda-se
+rodar antes de cada release.
 
-## 4.5 Avaliacao RAGAS aplicada a agente multi-tool (descoberta 2026-05-03)
+### 3.5 RAGAS aplicada a agente multi-tool
 
-Apos rodar `make eval` (RAGAS sobre golden set 20 itens), observamos:
-- `answer_relevancy`: **0.715** (bom)
-- `faithfulness`: **0.254** (baixo)
+**Observacao empirica** (golden set 20 itens):
+- `answer_relevancy`: 0.715
+- `faithfulness`: 0.254
 - `context_precision`: 0.308
 - `context_recall`: 0.146
 
-**Diagnostico:** RAGAS faithfulness assume que `answer` deve ser apoiado pelos
-`contexts` recuperados via RAG. Mas nosso agente usa **4 tools** (preco
-yfinance, LSTM, sentimento, RAG). Quando o agente responde "preco da NVDA e
-$198", RAGAS marca como nao-suportado porque so ve os chunks RAG no contexto.
+**Diagnostico:** RAGAS faithfulness assume que `answer` deve ser apoiado
+pelos `contexts` recuperados via RAG. Mas o agente usa **4 tools** (preco
+yfinance, LSTM, sentimento, RAG). Quando responde `"preco da NVDA e $198"`,
+RAGAS marca como nao-suportado porque so ve os chunks RAG no contexto.
 
-**Conclusao:** isto e **artefato metodologico** (avaliar agente multi-tool com
-metrica desenhada para RAG puro), nao falha do sistema. LLM-as-judge
-(coerencia 4.55/5, completude 3.88/5) confirma que as respostas sao corretas.
+**Conclusao:** trata-se de artefato metodologico (avaliar agente
+multi-tool com metrica desenhada para RAG puro). LLM-as-judge confirma
+qualidade das respostas (coerencia tecnica 4.55/5, completude 3.88/5).
 
 **Roadmap RAGAS:**
-1. Customizar `_build_rag_rows` para incluir TODAS as observacoes de tools
-   (nao so chunks RAG) como contexts.
+1. Customizar `_build_rag_rows` para incluir todas as observacoes de tools
+   como contexts (nao apenas chunks RAG).
 2. Indexar mais chunks por filing (50-100, em vez dos 30 atuais) ou usar
    parsing semantico que prioriza Item 1A (Risk Factors) e Item 7 (MD&A).
 
-## 5. Roadmap Pos-MVP
+## 4. Roadmap
 
-1. **Champion-challenger retraining** com aprovacao humana antes de promover.
-2. **Drift retrigger automatico** (PSI > 0.2 dispara retraining job).
-3. **Quantizacao self-hosted** com vLLM (Llama-3.1-8B-Instruct AWQ).
-4. **Rate limit por IP** com `slowapi` no `/chat` (cobre LLM10 totalmente).
-5. **Decodificacao base64 antes do guardrail** (cobre Cenario 3 do red team).
-6. **LSTM multi-ticker** treinado com transferencia (5+ empresas).
-7. **Integration tests** end-to-end com VCR cassettes para mocks de rede.
-8. **Llama Guard local** como segundo filtro de input.
+1. Champion-challenger retraining com aprovacao humana antes de promover.
+2. Drift retrigger automatico (PSI > 0.2 dispara retraining job).
+3. Quantizacao self-hosted com vLLM (Llama-3.1-8B-Instruct AWQ).
+4. Rate limit por IP com `slowapi` no `/chat` (cobre LLM10 totalmente).
+5. Decodificacao base64 antes do guardrail (cobre Cenario 3 do Red Team).
+6. LSTM multi-ticker treinado com transferencia (5+ empresas).
+7. Integration tests end-to-end com VCR cassettes.
+8. Llama Guard local como segundo filtro de input.
 
-## 6. Riscos Residuais
+## 5. Riscos Residuais
 
-| Risco                                           | Probabilidade | Impacto | Mitigacao atual                              |
-|-------------------------------------------------|---------------|---------|----------------------------------------------|
-| Vazamento de PII em logs                        | Baixa         | Alto    | Output guardrail Presidio                    |
-| Decisao automatizada por usuario inexperiente   | Media         | Alto    | Disclaimer explicito em todas as respostas   |
-| Custo Gemini explode em producao                | Media         | Medio   | `max_tokens` + limite 4096 chars no input    |
-| Filings desatualizados (nao re-indexados)       | Alta          | Baixo   | Re-indexacao manual via `make index-rag`     |
-| Drift no LSTM (treino terminou em 2024-12-31)   | Alta          | Medio   | Relatorio Evidently sob demanda              |
+| Risco                                         | Probabilidade | Impacto | Mitigacao atual                              |
+|-----------------------------------------------|---------------|---------|----------------------------------------------|
+| Vazamento de PII em logs                      | Baixa         | Alto    | Output guardrail Presidio                    |
+| Decisao automatizada por usuario inexperiente | Media         | Alto    | Disclaimer explicito em todas as respostas   |
+| Custo Gemini explode em producao              | Media         | Medio   | `max_tokens` + limite 4096 chars no input    |
+| Filings desatualizados (nao re-indexados)     | Alta          | Baixo   | Re-indexacao manual via `make index-rag`     |
+| Drift no LSTM (treino terminou em 2024-12-31) | Alta          | Medio   | Relatorio Evidently sob demanda              |
 
-## 7. Equipe e Responsabilidades
+## 6. Equipe e Responsabilidades
 
-- **Owner:** Cleber Carvalho
-- **DPO (LGPD):** Cleber Carvalho (interim)
-- **On-call:** Cleber Carvalho
+- **Owner:** ml-team
+- **DPO (LGPD):** ml-team (interim)
+- **On-call:** ml-team
 
-## 8. Conformidade
+## 7. Conformidade
 
 - LGPD: ver `docs/LGPD_PLAN.md`
 - OWASP Top 10 LLM: ver `docs/OWASP_MAPPING.md`

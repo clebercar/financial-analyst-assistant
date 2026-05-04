@@ -1,13 +1,11 @@
 """LSTM em PyTorch para previsao de precos de acoes.
 
-Conversao da arquitetura Keras da Fase 4 mantendo a mesma topologia:
+Topologia:
     LSTM(50) -> Dropout(0.2) -> LSTM(50) -> Dropout(0.2) -> Dense(25, ReLU) -> Dense(1)
 
-Por que portar pra PyTorch?
-- O Datathon Fase 5 padronizou o stack em PyTorch + MLflow (PyTorch tem hook nativo
-  no MLflow e suporta tracing/logging mais granular).
-- Mantemos a topologia identica pra que o desempenho seja comparavel a Fase 4
-  (mesma quantidade de parametros, mesmas regularizacoes).
+PyTorch foi escolhido por:
+- Hook nativo no MLflow (autolog mais granular)
+- Tracing/logging mais flexivel
 
 Nota sobre num_layers:
 - Em PyTorch, dropout="entre camadas" e aplicado pelo proprio nn.LSTM quando

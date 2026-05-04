@@ -1,4 +1,4 @@
-"""Avaliacao do pipeline RAG+Agent com 4 metricas RAGAS obrigatorias do Datathon.
+"""Avaliacao do pipeline RAG+Agent com as 4 metricas RAGAS principais.
 
 Metricas (todas no intervalo [0, 1], maior = melhor):
 - `faithfulness`: a resposta tem suporte nos contextos recuperados? (combate alucinacao)

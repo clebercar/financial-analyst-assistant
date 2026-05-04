@@ -1,4 +1,4 @@
-"""API REST do Datathon Fase 5: agente financeiro ReAct + Gemini.
+"""API REST do agente financeiro ReAct + Gemini.
 
 Endpoints:
 - GET  /health        -> liveness check.
@@ -37,9 +37,9 @@ VERSAO_API = "0.5.0"
 app = FastAPI(
     title="Financial Analyst Agent API",
     description=(
-        "API REST do Datathon Fase 5. Expoe um agente ReAct com 4 tools "
-        "financeiras (consultar_preco, prever_preco_lstm, analisar_sentimento, "
-        "buscar_em_filings) backed pelo Gemini."
+        "Agente ReAct com 4 tools financeiras (consultar_preco, "
+        "prever_preco_lstm, analisar_sentimento, buscar_em_filings) "
+        "orquestrado pelo Gemini."
     ),
     version=VERSAO_API,
 )

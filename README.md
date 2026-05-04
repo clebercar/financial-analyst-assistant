@@ -1,21 +1,20 @@
-# Datathon Fase 05 — Assistente de Analista Financeiro
+# Financial Analyst Assistant
 
 [![tests](https://img.shields.io/badge/tests-72%20passing-brightgreen)]()
 [![coverage](https://img.shields.io/badge/coverage-%E2%89%A560%25-blue)]()
 [![python](https://img.shields.io/badge/python-3.11%2B-blue)]()
 [![license](https://img.shields.io/badge/license-MIT-lightgrey)]()
 
-Sistema MLOps end-to-end que ajuda analistas de buy-side a decidir compra/venda
-de acoes via agente conversacional com **RAG sobre filings 10-K/10-Q da SEC**,
-**LSTM em PyTorch**, **classificador de sentimento sklearn** e **agente ReAct com
-Gemini 2.5 Flash** — tudo com observabilidade, guardrails de seguranca e
-governanca documentada.
+Assistente conversacional para analistas de buy-side decidirem compra/venda de
+acoes. Combina **RAG sobre filings 10-K/10-Q da SEC**, **previsao com LSTM**,
+**classificacao de sentimento** e **consulta de precos em tempo real** via um
+agente ReAct (Gemini 2.5 Flash) — com observabilidade, guardrails de seguranca
+e governanca documentada.
 
-> **Pitch (30s):** analistas gastam horas lendo um unico 10-K. Aqui um agente
-> ReAct combina o filing mais recente da SEC, o preco de mercado, a projecao do
-> LSTM e a leitura de sentimento — e devolve um sumario citavel em segundos,
-> com trace completo em Langfuse, metricas em Grafana e PII filtrado por
-> Presidio. Construido em 9 dias, integrando ~30% de reuso da Fase 4 (LSTM AAPL).
+> **TL;DR:** o usuario pergunta `"Devo comprar AAPL hoje?"` no `POST /chat`. O
+> agente decide quais ferramentas chamar (preco, projecao, filing, sentimento),
+> compoe um sumario citavel e aplica guardrails de PII na saida. Tudo
+> instrumentado em Langfuse, Prometheus e Grafana.
 
 ---
 
@@ -24,12 +23,12 @@ governanca documentada.
 | Camada           | Tecnologia                                                        |
 |------------------|-------------------------------------------------------------------|
 | Deep Learning    | PyTorch 2.x (LSTM)                                                |
-| ML classico      | scikit-learn (TF-IDF + Logistic Regression de sentimento)         |
+| ML classico      | scikit-learn (TF-IDF + Logistic Regression)                       |
 | Agente / LLM     | LangChain + LangGraph ReAct + Gemini 2.5 Flash                    |
-| RAG              | ChromaDB + Gemini embeddings + chunking de filings SEC EDGAR      |
+| RAG              | ChromaDB + Gemini embeddings + filings da SEC EDGAR               |
 | API              | FastAPI + Uvicorn                                                 |
 | Tracking         | MLflow (experimentos + model registry)                            |
-| Tracing LLM      | Langfuse (traces do agente, custos, latencia por step)            |
+| Tracing LLM      | Langfuse (custos, latencia por step, faithfulness)                |
 | Metricas         | Prometheus + Grafana                                              |
 | Drift            | Evidently (PSI offline)                                           |
 | Seguranca        | Regex anti-injection + Microsoft Presidio (PII redaction)         |
@@ -38,7 +37,7 @@ governanca documentada.
 
 ---
 
-## Demo rapida
+## Quick start
 
 ### Pre-requisitos
 
@@ -54,7 +53,7 @@ git clone <repo>
 cd phase-5
 
 cp .env.example .env
-# editar .env e colocar GEMINI_API_KEY (e Langfuse keys, se quiser tracing)
+# editar .env e preencher GEMINI_API_KEY (e Langfuse keys, se quiser tracing)
 
 make install
 ```
@@ -62,10 +61,10 @@ make install
 ### Pipeline completo (treino -> indexacao -> serve)
 
 ```bash
-make train-lstm          # treina LSTM AAPL e loga no MLflow
+make train-lstm          # treina LSTM e loga no MLflow
 make train-sentiment     # treina classificador de sentimento
-make download-filings    # baixa 10-K/10-Q da SEC (precisa SEC_USER_AGENT no .env)
-make index-rag           # indexa filings no ChromaDB
+make download-filings    # baixa 10-K/10-Q da SEC EDGAR
+make index-rag           # indexa filings no ChromaDB (~20 min: rate limit free tier)
 make serve               # sobe FastAPI em http://localhost:8000
 ```
 
@@ -93,7 +92,7 @@ Resposta tipica (resumida):
 {
   "resposta": "Apple esta cotada a USD 230 (yfinance). LSTM projeta USD 233 em 1 dia. O 10-K aponta crescimento de servicos como driver principal. Sentimento: neutro-positivo. Sumario: tendencia altista de curtissimo prazo, mas volatilidade alta. Esta resposta e informativa e nao constitui recomendacao de investimento.",
   "tools_chamadas": ["consultar_preco", "prever_preco_lstm", "buscar_em_filings", "analisar_sentimento"],
-  "trace_id": "lf-..."
+  "iteracoes": 4
 }
 ```
 
@@ -115,15 +114,15 @@ Resposta tipica (resumida):
         +-------------------------+-------------------------+
         v                         v                         v
   Input Guardrail           Agente ReAct            Output Guardrail
-  (regex inj +              (Gemini 2.5 Flash)      (Presidio PII)
-   max length)              max_iter=10
+  (regex anti-injection +   (Gemini 2.5 Flash)      (Presidio PII)
+   max length 4096)         max_iter=10
                                   |
         +-------------+-----------+-----------+-------------+
-        v             v           v           v             v
-   consultar      prever        analisar   buscar_em      (futuro:
-   _preco         _preco_lstm   _sentimento _filings      mais tools)
-   (yfinance)     (PyTorch)     (sklearn)  (ChromaDB
-                                            + RAG)
+        v             v           v           v
+   consultar      prever        analisar   buscar_em
+   _preco         _preco_lstm   _sentimento _filings
+   (yfinance)     (PyTorch)     (sklearn)   (ChromaDB
+                                             + RAG)
 
    +-----------------------------------------------------------+
    |  OBSERVABILIDADE (em paralelo)                            |
@@ -133,34 +132,20 @@ Resposta tipica (resumida):
    +-----------------------------------------------------------+
 ```
 
-Diagrama detalhado: ver `docs/SYSTEM_CARD.md`.
-
----
-
-## Cobertura dos requisitos do Datathon
-
-| Etapa | Entrega                                                                                           | Status |
-|-------|---------------------------------------------------------------------------------------------------|--------|
-| 1. Dados + Baseline                | LSTM PyTorch + Sentimento sklearn + MLflow tracking + schemas pandera     | OK     |
-| 2. LLM + Agente + RAG              | ReAct Gemini + 4 tools + ChromaDB com filings reais + 3 configs benchmark | OK     |
-| 3. Avaliacao + Observabilidade     | RAGAS 4 metricas + LLM-judge 3 criterios + Langfuse + Grafana             | OK     |
-| 4. Seguranca + Governanca          | Guardrails I/O + OWASP Top10 LLM (5) + Red Team (5) + Cards + LGPD        | OK     |
-
-Maturidade MLOps, decisoes de arquitetura, trade-offs e roadmap pos-MVP
-estao detalhados em `docs/SYSTEM_CARD.md`.
+Diagrama detalhado em `docs/SYSTEM_CARD.md`.
 
 ---
 
 ## Resultados de avaliacao
 
-Numeros reais, gerados por `make smoke`, `make eval`, `make benchmark` e
+Numeros gerados por `make smoke`, `make eval`, `make benchmark` e
 `python -m evaluation.llm_judge`. Persistidos em `evaluation/results/`.
 
 ### Smoke test E2E (agente real, 7 perguntas)
 
-7 / 7 sucesso. Multi-hop usou 4 tools em sequencia
+7 / 7 sucesso. Pergunta multi-hop usou 4 tools em sequencia
 (`buscar_em_filings -> consultar_preco -> prever_preco_lstm -> buscar_em_filings`)
-em 14.6s.
+em 14.6 s.
 
 ### Benchmark de 3 configuracoes
 
@@ -170,7 +155,7 @@ em 14.6s.
 | B — mais contexto  | `gemini-2.5-flash`      | 5     | 21.4 s         |
 | C — modelo menor   | `gemini-2.5-flash-lite` | 3     | 2.4 s          |
 
-### RAGAS (golden set 20 itens, 4 metricas obrigatorias)
+### RAGAS (golden set 20 itens, 4 metricas)
 
 | Metrica            | Score |
 |--------------------|-------|
@@ -179,8 +164,8 @@ em 14.6s.
 | context_precision  | 0.308 |
 | context_recall     | 0.146 |
 
-Analise dos resultados (incluindo discussao do `faithfulness` aplicado a
-agentes multi-tool) em `docs/SYSTEM_CARD.md`.
+Discussao do `faithfulness` aplicado a agentes multi-tool em
+`docs/SYSTEM_CARD.md`.
 
 ### LLM-as-judge (3 criterios, escala 0-5, n=20)
 
@@ -194,15 +179,13 @@ agentes multi-tool) em `docs/SYSTEM_CARD.md`.
 
 ## Documentos
 
-| Documento                                                  | Conteudo                                            |
-|------------------------------------------------------------|-----------------------------------------------------|
-| [Model Card](docs/MODEL_CARD.md)                           | LSTM e sentimento — dados, metricas, limitacoes     |
-| [System Card](docs/SYSTEM_CARD.md)                         | Arquitetura, GAPs, trade-offs, riscos residuais     |
-| [LGPD Plan](docs/LGPD_PLAN.md)                             | Bases legais, direitos do titular, DPO, retencao    |
-| [OWASP Mapping](docs/OWASP_MAPPING.md)                     | OWASP Top 10 para LLM Apps — mitigacoes implementadas |
-| [Red Team Report](docs/RED_TEAM_REPORT.md)                 | 5 cenarios adversariais executados                   |
-| [Pitch slides](docs/PITCH.md)                              | Slides Marp pra apresentacao                         |
-| [Roteiro do video](docs/INSTRUCOES_VIDEO.md)               | Como gravar a demo de 8-10 min                       |
+| Documento                                  | Conteudo                                              |
+|--------------------------------------------|-------------------------------------------------------|
+| [Model Card](docs/MODEL_CARD.md)           | LSTM e sentimento — dados, metricas, limitacoes       |
+| [System Card](docs/SYSTEM_CARD.md)         | Arquitetura, decisoes, trade-offs, riscos residuais   |
+| [LGPD Plan](docs/LGPD_PLAN.md)             | Bases legais, direitos do titular, retencao           |
+| [OWASP Mapping](docs/OWASP_MAPPING.md)     | OWASP Top 10 para LLM Apps — mitigacoes implementadas |
+| [Red Team Report](docs/RED_TEAM_REPORT.md) | Cenarios adversariais executados                      |
 
 ---
 
@@ -215,14 +198,14 @@ agentes multi-tool) em `docs/SYSTEM_CARD.md`.
 | `make lint`              | ruff check em `src/`, `tests/`, `evaluation/`                      |
 | `make typecheck`         | mypy com `--ignore-missing-imports`                                |
 | `make security`          | bandit (severidade media+)                                         |
-| `make train-lstm`        | Treina LSTM AAPL e loga no MLflow                                  |
+| `make train-lstm`        | Treina LSTM e loga no MLflow                                       |
 | `make train-sentiment`   | Treina classificador de sentimento                                 |
 | `make download-filings`  | Baixa 10-K/10-Q da SEC EDGAR                                       |
 | `make index-rag`         | Indexa filings no ChromaDB                                         |
 | `make serve`             | Sobe FastAPI (`uvicorn src.serving.app:app --reload --port 8000`) |
 | `make mlflow-ui`         | Sobe MLflow UI em `:5000`                                          |
 | `make eval`              | Roda RAGAS (4 metricas)                                            |
-| `make benchmark`         | Roda 3 configs do agente em paralelo                               |
+| `make benchmark`         | Compara 3 configuracoes do agente                                  |
 | `make drift`             | Gera relatorio Evidently em `evaluation/results/drift/`            |
 | `make smoke`             | Smoke test E2E (5 queries + 2 cenarios red team contra agente real)|
 | `make clean`             | Remove caches (`mlruns`, `chroma_db`, `.pytest_cache`, etc)        |
@@ -233,16 +216,16 @@ agentes multi-tool) em `docs/SYSTEM_CARD.md`.
 
 | Metodo | Path        | Descricao                                                   |
 |--------|-------------|-------------------------------------------------------------|
-| GET    | `/health`   | Health check (status da API e dos modelos carregados)       |
-| POST   | `/chat`     | Agente ReAct (endpoint principal do Datathon Fase 5)        |
+| GET    | `/health`   | Health check                                                |
+| POST   | `/chat`     | Agente ReAct (endpoint principal)                           |
 | GET    | `/metrics`  | Metricas no formato Prometheus                              |
 | GET    | `/docs`     | Swagger UI (gerado automaticamente)                         |
 
-Schemas Pydantic em `src/serving/app.py`.
+Schemas Pydantic em `src/serving/schemas.py`.
 
 ---
 
-## Estrutura do projeto (resumida)
+## Estrutura do projeto
 
 ```
 phase-5/
@@ -251,7 +234,6 @@ phase-5/
 ├── Dockerfile                   (multi-stage — build + runtime)
 ├── docker-compose.yml           (api + prometheus + grafana + mlflow)
 ├── pyproject.toml
-├── requirements.txt
 ├── .env.example                 (template; .env nao versionado)
 │
 ├── src/
@@ -266,41 +248,22 @@ phase-5/
 ├── evaluation/
 │   ├── ragas_eval.py            (4 metricas RAGAS)
 │   ├── llm_judge.py             (3 criterios LLM-as-judge)
-│   ├── benchmark_configs.py     (3 configs em paralelo)
+│   ├── benchmark_configs.py     (3 configs comparadas)
 │   └── results/                 (JSON e HTML dos relatorios)
 │
 ├── configs/                     (model_config.yaml + prompts.yaml)
 ├── monitoring/                  (prometheus.yml + grafana provisioning)
-├── notebooks/                   (EDA — SEM logica de producao)
-├── tests/                       (72 testes — pytest com cobertura ≥60%)
+├── notebooks/                   (EDA — sem logica de producao)
+├── tests/                       (pytest unitario com cobertura ≥60%)
 ├── docs/                        (Model Card, System Card, LGPD, OWASP, etc)
 └── models/                      (artefatos: lstm_torch.pt, sentiment.joblib)
 ```
 
 ---
 
-## Video de demonstracao
+## Convencoes de codigo
 
-**Link:** `(preencher apos gravacao)`
-
-Roteiro e instrucoes de gravacao em [`docs/INSTRUCOES_VIDEO.md`](docs/INSTRUCOES_VIDEO.md).
-
----
-
-## Historico — Fase 4
-
-Este projeto reusa ~30% do codigo da Fase 4 (LSTM AAPL com TensorFlow/Keras).
-A Fase 4 entregou um modelo standalone com API `/predict`. Aqui esse modelo
-foi convertido para PyTorch e virou uma **tool** (`prever_preco_lstm`)
-chamada pelo agente via `/chat`. O endpoint `/predict` original da Fase 4 foi
-removido — toda inferencia agora passa pelo agente. A versao Keras ainda
-esta em `models/lstm_model.keras` como referencia historica.
-
----
-
-## Convencoes de Codigo
-
-- Codigo, comentarios e docstrings em **portugues** (alinhado com a apresentacao)
+- Codigo, comentarios e docstrings em **portugues**
 - Type hints em todas as funcoes publicas
 - Logging estruturado (sem `print`)
 - Testes unitarios com pytest (`tests/test_*.py`)
