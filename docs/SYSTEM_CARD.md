@@ -25,7 +25,7 @@ Flash, exposto por API FastAPI com observabilidade ponta-a-ponta.
         +-------------------------+-------------------------+
         v                         v                         v
   Input Guardrail           Agente ReAct            Output Guardrail
-  (regex inj +              (Gemini 2.0 Flash)      (Presidio PII)
+  (regex inj +              (Gemini 2.5 Flash)      (Presidio PII)
    max length)              max_iter=10
                                   |
         +-------------+-----------+-----------+-------------+
@@ -48,7 +48,7 @@ Flash, exposto por API FastAPI com observabilidade ponta-a-ponta.
 | Componente   | Tecnologia                          | Responsabilidade                  |
 |--------------|-------------------------------------|-----------------------------------|
 | API          | FastAPI                             | Servir endpoints HTTP             |
-| Agente       | LangChain ReAct + Gemini 2.0 Flash  | Orquestrar tools                  |
+| Agente       | LangChain ReAct + Gemini 2.5 Flash  | Orquestrar tools                  |
 | RAG          | ChromaDB + Gemini embeddings        | Retrieval de filings              |
 | Tools (4)    | yfinance, PyTorch LSTM, sklearn, RAG| Capacidades especificas           |
 | Tracking     | MLflow                              | Registro de experimentos          |
@@ -135,6 +135,29 @@ funcional - nao cabe no MVP.
 
 **Mitigacao:** `make smoke` rodado manualmente antes de cada release; CI
 nao executa rede externa.
+
+## 4.5 Avaliacao RAGAS aplicada a agente multi-tool (descoberta 2026-05-03)
+
+Apos rodar `make eval` (RAGAS sobre golden set 20 itens), observamos:
+- `answer_relevancy`: **0.715** (bom)
+- `faithfulness`: **0.254** (baixo)
+- `context_precision`: 0.308
+- `context_recall`: 0.146
+
+**Diagnostico:** RAGAS faithfulness assume que `answer` deve ser apoiado pelos
+`contexts` recuperados via RAG. Mas nosso agente usa **4 tools** (preco
+yfinance, LSTM, sentimento, RAG). Quando o agente responde "preco da NVDA e
+$198", RAGAS marca como nao-suportado porque so ve os chunks RAG no contexto.
+
+**Conclusao:** isto e **artefato metodologico** (avaliar agente multi-tool com
+metrica desenhada para RAG puro), nao falha do sistema. LLM-as-judge
+(coerencia 4.55/5, completude 3.88/5) confirma que as respostas sao corretas.
+
+**Roadmap RAGAS:**
+1. Customizar `_build_rag_rows` para incluir TODAS as observacoes de tools
+   (nao so chunks RAG) como contexts.
+2. Indexar mais chunks por filing (50-100, em vez dos 30 atuais) ou usar
+   parsing semantico que prioriza Item 1A (Risk Factors) e Item 7 (MD&A).
 
 ## 5. Roadmap Pos-MVP
 
