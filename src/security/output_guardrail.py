@@ -79,5 +79,8 @@ def sanitize_output(text: str, language: str = "pt") -> str:
         return text
 
     logger.warning("PII detectado: %d entidade(s)", len(results))
-    sanitized = _anonymizer.anonymize(text=text, analyzer_results=results)
+    # `presidio_analyzer.RecognizerResult` e `presidio_anonymizer.RecognizerResult`
+    # sao classes distintas com mesmo formato — compativeis em runtime, mas o
+    # mypy nao consegue inferir essa equivalencia entre pacotes irmaos.
+    sanitized = _anonymizer.anonymize(text=text, analyzer_results=results)  # type: ignore[arg-type]
     return sanitized.text
