@@ -8,7 +8,7 @@
 Sistema MLOps end-to-end que ajuda analistas de buy-side a decidir compra/venda
 de acoes via agente conversacional com **RAG sobre filings 10-K/10-Q da SEC**,
 **LSTM em PyTorch**, **classificador de sentimento sklearn** e **agente ReAct com
-Gemini 2.0 Flash** — tudo com observabilidade, guardrails de seguranca e
+Gemini 2.5 Flash** — tudo com observabilidade, guardrails de seguranca e
 governanca documentada.
 
 > **Pitch (30s):** analistas gastam horas lendo um unico 10-K. Aqui um agente
@@ -25,7 +25,7 @@ governanca documentada.
 |------------------|-------------------------------------------------------------------|
 | Deep Learning    | PyTorch 2.x (LSTM)                                                |
 | ML classico      | scikit-learn (TF-IDF + Logistic Regression de sentimento)         |
-| Agente / LLM     | LangChain ReAct + Gemini 2.0 Flash                                |
+| Agente / LLM     | LangChain + LangGraph ReAct + Gemini 2.5 Flash                    |
 | RAG              | ChromaDB + Gemini embeddings + chunking de filings SEC EDGAR      |
 | API              | FastAPI + Uvicorn                                                 |
 | Tracking         | MLflow (experimentos + model registry)                            |
@@ -108,15 +108,14 @@ Resposta tipica (resumida):
                                   v
                   +-------------------------------+
                   |   API FastAPI                 |
-                  |   POST /chat (principal)      |
-                  |   POST /predict (legado F4)   |
+                  |   POST /chat                  |
                   |   GET /health, /metrics       |
                   +---------------+---------------+
                                   |
         +-------------------------+-------------------------+
         v                         v                         v
   Input Guardrail           Agente ReAct            Output Guardrail
-  (regex inj +              (Gemini 2.0 Flash)      (Presidio PII)
+  (regex inj +              (Gemini 2.5 Flash)      (Presidio PII)
    max length)              max_iter=10
                                   |
         +-------------+-----------+-----------+-------------+
@@ -197,7 +196,7 @@ Detalhes e justificativas dos parciais: `docs/SYSTEM_CARD.md`.
 | `make eval`              | Roda RAGAS (4 metricas)                                            |
 | `make benchmark`         | Roda 3 configs do agente em paralelo                               |
 | `make drift`             | Gera relatorio Evidently em `evaluation/results/drift/`            |
-| `make smoke`             | Smoke test manual (sobe stack + curl `/health`)                    |
+| `make smoke`             | Smoke test E2E (5 queries + 2 cenarios red team contra agente real)|
 | `make clean`             | Remove caches (`mlruns`, `chroma_db`, `.pytest_cache`, etc)        |
 
 ---
@@ -208,7 +207,6 @@ Detalhes e justificativas dos parciais: `docs/SYSTEM_CARD.md`.
 |--------|-------------|-------------------------------------------------------------|
 | GET    | `/health`   | Health check (status da API e dos modelos carregados)       |
 | POST   | `/chat`     | Agente ReAct (endpoint principal do Datathon Fase 5)        |
-| POST   | `/predict`  | LSTM direto (legado da Fase 4, mantido por compatibilidade) |
 | GET    | `/metrics`  | Metricas no formato Prometheus                              |
 | GET    | `/docs`     | Swagger UI (gerado automaticamente)                         |
 
@@ -265,10 +263,10 @@ Roteiro e instrucoes de gravacao em [`docs/INSTRUCOES_VIDEO.md`](docs/INSTRUCOES
 
 Este projeto reusa ~30% do codigo da Fase 4 (LSTM AAPL com TensorFlow/Keras).
 A Fase 4 entregou um modelo standalone com API `/predict`. Aqui esse modelo
-virou uma **tool** (`prever_preco_lstm`) chamada pelo agente. O endpoint
-`/predict` segue disponivel pra compatibilidade. A versao em PyTorch passou a
-ser o caminho oficial; a versao Keras ainda esta em `models/lstm_model.keras`
-como referencia historica.
+foi convertido para PyTorch e virou uma **tool** (`prever_preco_lstm`)
+chamada pelo agente via `/chat`. O endpoint `/predict` original da Fase 4 foi
+removido — toda inferencia agora passa pelo agente. A versao Keras ainda
+esta em `models/lstm_model.keras` como referencia historica.
 
 ---
 
