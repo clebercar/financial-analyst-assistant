@@ -101,6 +101,24 @@ embeddings `gemini-embedding-001` (3072 dims), ChromaDB persistido.
 
 ---
 
+## Benchmark de 3 configuracoes (real, n=5 queries cada)
+
+| Config             | Modelo                | top_k | Sucesso | Latencia media |
+|--------------------|-----------------------|-------|---------|----------------|
+| A — baseline       | `gemini-2.5-flash`    | 3     | 5/5     | **7.2s**       |
+| B — mais contexto  | `gemini-2.5-flash`    | 5     | 5/5     | 21.4s          |
+| C — modelo menor   | `gemini-2.5-flash-lite`| 3    | 5/5     | **2.4s**       |
+
+**Insights:**
+- **Top_k=5 quase triplicou a latencia** (mais contexto = mais tokens processados)
+- **Flash-lite e ~3x mais rapido** que flash com mesma qualidade no smoke
+- **Custo/req:** flash-lite ~5x mais barato (input tokens × menor)
+
+Trade-off: para casos simples (consulta de preco) flash-lite eh otimo;
+para multi-hop com RAG, flash baseline tem melhor raciocinio.
+
+---
+
 ## Cobertura dos 9 GAPs do Datathon
 
 | #  | GAP                                  | Status               |
