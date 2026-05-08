@@ -22,6 +22,7 @@ Uso:
 """
 
 import argparse
+import json
 import logging
 import subprocess
 from pathlib import Path
@@ -182,6 +183,14 @@ def train_lstm(config: dict) -> str:
         mlflow.log_metrics({"mae": mae, "rmse": rmse, "mape": mape})
         logger.info("Test MAE=%.4f USD | RMSE=%.4f USD | MAPE=%.2f%%", mae, rmse, mape)
 
+        # Persiste metricas em JSON para o gate de qualidade ler
+        metrics_path = MODEL_DIR / "metrics_lstm.json"
+        metrics_path.parent.mkdir(exist_ok=True)
+        metrics_path.write_text(
+            json.dumps({"mae": mae, "rmse": rmse, "mape": mape}), encoding="utf-8"
+        )
+        mlflow.log_artifact(str(metrics_path))
+
         # --- 8. Salvar artifacts ---
         MODEL_DIR.mkdir(exist_ok=True)
         torch.save(model.state_dict(), MODEL_PATH)
@@ -201,10 +210,37 @@ def main() -> None:
         required=True,
         help="Qual modelo treinar (lstm = preco de acao, sentiment = polaridade de noticia).",
     )
+    parser.add_argument(
+        "--ticker",
+        default=None,
+        help="Override do ticker no config (so faz sentido com --model lstm).",
+    )
+    parser.add_argument(
+        "--start-date",
+        default=None,
+        help="Override de start_date no formato YYYY-MM-DD (so --model lstm).",
+    )
+    parser.add_argument(
+        "--end-date",
+        default=None,
+        help="Override de end_date no formato YYYY-MM-DD (so --model lstm).",
+    )
     args = parser.parse_args()
+
+    if args.model == "sentiment" and (args.ticker or args.start_date or args.end_date):
+        parser.error("--ticker/--start-date/--end-date so se aplicam a --model lstm")
 
     with open(CONFIG_PATH) as f:
         config = yaml.safe_load(f)
+
+    # Aplica overrides na secao do LSTM (mantem retrocompat: sem flag = usa YAML)
+    if args.model == "lstm":
+        if args.ticker:
+            config["lstm"]["ticker"] = args.ticker
+        if args.start_date:
+            config["lstm"]["start_date"] = args.start_date
+        if args.end_date:
+            config["lstm"]["end_date"] = args.end_date
 
     if args.model == "lstm":
         run_id = train_lstm(config)
