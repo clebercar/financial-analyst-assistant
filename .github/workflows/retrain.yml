@@ -1,0 +1,88 @@
+name: Retrain
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: 'Modelo a treinar'
+        type: choice
+        options:
+          - lstm
+          - sentiment
+          - all
+        default: lstm
+      ticker:
+        description: 'Ticker (so LSTM, default AAPL)'
+        type: string
+        default: 'AAPL'
+      start_date:
+        description: 'Data inicio (YYYY-MM-DD, vazio = usa config)'
+        type: string
+        default: ''
+      end_date:
+        description: 'Data fim (YYYY-MM-DD, vazio = usa config)'
+        type: string
+        default: ''
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        model: ${{ fromJSON(inputs.model == 'all' && '["lstm","sentiment"]' || format('["{0}"]', inputs.model)) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]"
+          python -m spacy download en_core_web_sm
+          python -m spacy download pt_core_news_sm
+
+      - name: Train ${{ matrix.model }}
+        env:
+          TICKER: ${{ inputs.ticker }}
+          START_DATE: ${{ inputs.start_date }}
+          END_DATE: ${{ inputs.end_date }}
+          MODEL: ${{ matrix.model }}
+        run: |
+          ARGS="--model $MODEL"
+          if [ "$MODEL" = "lstm" ]; then
+            if [ -n "$TICKER" ]; then
+              ARGS="$ARGS --ticker $TICKER"
+            fi
+            if [ -n "$START_DATE" ]; then
+              ARGS="$ARGS --start-date $START_DATE"
+            fi
+            if [ -n "$END_DATE" ]; then
+              ARGS="$ARGS --end-date $END_DATE"
+            fi
+          fi
+          echo "Rodando: python -m src.models.train $ARGS"
+          python -m src.models.train $ARGS
+
+      - name: Quality gate
+        run: python -m src.models.evaluate_gate --model ${{ matrix.model }}
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: retrain-${{ matrix.model }}-${{ github.run_id }}
+          path: |
+            models/lstm_torch.pt
+            models/scaler.joblib
+            models/sentiment_classifier.joblib
+            models/metrics_${{ matrix.model }}.json
+            mlruns/
+          if-no-files-found: ignore
+          retention-days: 30
