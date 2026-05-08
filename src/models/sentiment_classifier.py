@@ -16,6 +16,7 @@ Tags MLflow padronizadas:
   de errar previsao de preco usada em ordem de compra)
 """
 
+import json
 import logging
 import subprocess
 from pathlib import Path
@@ -26,6 +27,7 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
+    accuracy_score,
     classification_report,
     f1_score,
     precision_score,
@@ -164,6 +166,7 @@ def train_sentiment(config: dict) -> str:
         y_pred = pipeline.predict(X_test)
 
         metrics = {
+            "accuracy": float(accuracy_score(y_test, y_pred)),
             "f1_macro": float(f1_score(y_test, y_pred, average="macro")),
             "precision_macro": float(
                 precision_score(y_test, y_pred, average="macro", zero_division=0)
@@ -172,10 +175,17 @@ def train_sentiment(config: dict) -> str:
         }
         mlflow.log_metrics(metrics)
 
+        # Persiste metricas em JSON para o gate de qualidade ler
+        metrics_path = MODEL_DIR / "metrics_sentiment.json"
+        metrics_path.parent.mkdir(exist_ok=True)
+        metrics_path.write_text(json.dumps(metrics), encoding="utf-8")
+        mlflow.log_artifact(str(metrics_path))
+
         report = classification_report(y_test, y_pred)
         mlflow.log_text(report, "classification_report.txt")
         logger.info(
-            "Sentimento F1=%.4f Precision=%.4f Recall=%.4f",
+            "Sentimento Acc=%.4f F1=%.4f Precision=%.4f Recall=%.4f",
+            metrics["accuracy"],
             metrics["f1_macro"],
             metrics["precision_macro"],
             metrics["recall_macro"],
