@@ -34,3 +34,12 @@ agent:
   temperature: 0.0
   max_iterations: 10
   max_input_chars: 4096
+
+thresholds:
+  lstm:
+    mae_max: 10.0      # USD: erro absoluto medio aceitavel
+    rmse_max: 15.0     # USD: penaliza erros grandes
+    mape_max: 8.0      # %: erro percentual aceitavel
+  sentiment:
+    accuracy_min: 0.70
+    f1_macro_min: 0.65
