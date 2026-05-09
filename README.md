@@ -68,6 +68,29 @@ make index-rag           # indexa filings no ChromaDB (~20 min: rate limit free 
 make serve               # sobe FastAPI em http://localhost:8000
 ```
 
+### Retreino via CI/CD (trigger manual)
+
+Workflow `.github/workflows/retrain.yml` retreina os modelos sob demanda
+direto pelo GitHub Actions, com gate de qualidade automatico:
+
+1. Aba **Actions** -> workflow **Retrain** -> botao **Run workflow**
+2. Inputs:
+   - `model`: `lstm`, `sentiment` ou `all` (matrix paralela)
+   - `ticker`: ticker do LSTM (default `AAPL`)
+   - `start_date` / `end_date`: janela historica (vazio = usa `configs/model_config.yaml`)
+3. O job treina, compara metricas com os `thresholds` do config
+   (`mae_max`, `rmse_max`, `mape_max` para LSTM; `accuracy_min`, `f1_macro_min`
+   para sentiment) via `src/models/evaluate_gate.py` e falha se violar.
+4. Artefatos (`*.pt`, `*.joblib`, `metrics_<model>.json`, `mlruns/`) ficam
+   disponiveis pra download por 30 dias na aba do run, mesmo se o gate falhar.
+
+Para retreinar localmente com override de ticker:
+
+```bash
+python -m src.models.train --model lstm --ticker GOOGL
+python -m src.models.evaluate_gate --model lstm
+```
+
 ### Stack completa via Docker (API + Prometheus + Grafana + MLflow)
 
 ```bash
